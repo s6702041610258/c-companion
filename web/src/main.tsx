@@ -37,7 +37,7 @@ function App(){
  const pendingJob=useRef<string|null>(null);
  const references=useSources(messages,chatId);
  const selected=chapters.find(c=>c.id===chapter),label=selected?.title||'ทุกบทเรียน';
- useEffect(()=>{document.documentElement.dataset.theme=theme;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#14221e':'#fbfcfa')},[theme]);
+ useEffect(()=>{document.documentElement.dataset.theme=theme;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#0d1014':'#147d70')},[theme]);
  function toggleTheme(){setTheme(current=>{const next=current==='dark'?'light':'dark';try{localStorage.setItem(themeKey,next)}catch{}return next})}
  async function refresh(){const b=await api('bootstrap');setChapters(b.chapters);setChats(b.chats);setProgress(b.progress);setConfigured(b.configured)}
  useEffect(()=>{refresh().catch(e=>setError(e.message)).finally(()=>setBooting(false));return ()=>controller.current?.abort()},[]);
@@ -94,7 +94,7 @@ function App(){
    <div className="history-heading"><span><History size={15}/> บทสนทนาล่าสุด</span><span>{chats.length}</span></div>
    <div className="history-list">{chats.length===0?<p className="history-empty">คำถามแรกของคุณ<br/>จะเริ่มเรื่องราวตรงนี้</p>:chats.slice(0,15).map(c=><div key={c.id} className={'history-row '+(c.id===chatId?'selected':'')}><button disabled={busy} onClick={()=>openChat(c)} title={c.title}>{c.title}</button><button className="delete-chat" aria-label={'ลบ '+c.title} disabled={busy} onClick={()=>setDeleting(c)}><Trash2 size={14}/></button></div>)}</div>
    <div className="sidebar-book"><div className="little-book"><span>C</span><i>COMPANION</i></div><div><strong>เรียนจากหนังสือเล่มเดียวกัน</strong><p>12 บท · 113 หน้า PDF</p><button onClick={()=>setBookPage(1)}>เปิดหนังสือ <ArrowUpRight size={14}/></button></div></div>
-   <button className="nav-item report-nav" onClick={()=>{setSidebar(false);setReport({})}}><Flag size={17}/>รายงานปัญหา</button><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.1.0</span></div>
+   <button className="nav-item report-nav" onClick={()=>{setSidebar(false);setReport({})}}><Flag size={17}/>รายงานปัญหา</button><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.1.1</span></div>
   </aside>
   <main className="main">
    <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" aria-label="เปิดเมนู" onClick={()=>setSidebar(true)}><Menu size={20}/></button><span className="desktop-icon"><Compass size={19}/></span><span>ห้องติว</span><ChevronRight size={14}/><button onClick={()=>setLibrary(true)}>{label}</button></div><div className="topbar-actions"><SourcesButton panel={references}/><button className="book-button" onClick={()=>setBookPage(selected?selected.start+5:1)}><BookOpen size={16}/><span>เปิดหนังสือ</span></button><button className="theme-toggle" type="button" aria-label={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} title={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} onClick={toggleTheme}>{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}<span>{theme==='dark'?'โหมดสว่าง':'โหมดมืด'}</span></button></div></header>
