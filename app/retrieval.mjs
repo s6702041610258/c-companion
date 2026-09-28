@@ -18,6 +18,7 @@ function pageAnchors(query,needles){
  const add=page=>{if(!hints.includes(page))hints.push(page)};
  if(needles.length)for(const match of query.matchAll(/หน้า\s*(\d{1,3})/g))add(Number(match[1]));
  if(/\b(?:int|short|long|char|float|double)\s+[a-z_]\w*\s*\[\s*\d+\s*\]|(?:อาร์เรย์|อาเรย์|array)[^\n]*\[[^\]]+\]/i.test(query))add(51);
+ if(/\b(?:argc|argv)\b/i.test(query)){add(85);add(86)}
  // A named for loop is more specific than generic loop/printf vocabulary.
  if(/\bfor\s*\(|(?:ลูป|คำสั่ง|loop|statement|iteration)\s*for\b|\bfor\s+(?:loop|statement|iteration)\b/i.test(query))add(46);
  if(/(?:sizeof\s*\(|ขนาด|ไบต์|\bbytes?\b)/i.test(query)&&/\b(?:int|short|long|char|float|double)\b/i.test(query))add(15);

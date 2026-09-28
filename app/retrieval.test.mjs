@@ -35,3 +35,8 @@ test('beginner program structure is not confused with the struct data type',()=>
  for(const question of ['ขอโจทย์ลูป for พิมพ์เลข 1 ถึง 5 คนละบรรทัด','C for loop exercise print numbers 1 to 5','for (int i=1; i<=5; i++) printf("%d", i);'])assert.equal(retrieve(pages,question)[0]?.page,46,question);
  assert.ok(!retrieve(pages,'example for printf output').some(p=>p.page===46&&p.score>=80));
 });
+
+test('argc argv preserve command line pages despite generic parameter expansion',()=>{
+ const refs=retrieve(pages,'argc argv คืออะไร\nพารามิเตอร์ ฟังก์ชัน function parameter argument return pointer array main');
+ assert.equal(refs[0].page,85);assert.ok(refs.some(p=>p.page===86));
+});

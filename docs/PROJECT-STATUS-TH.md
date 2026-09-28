@@ -1,6 +1,13 @@
 # สถานะ C Companion
 
-อัปเดต 28 กันยายน 2026 — ซอร์สรุ่น 1.2.1; สถานะ CI และการ deploy จริงบันทึกใน GitHub release ของรุ่นนี้
+อัปเดต 28 กันยายน 2026 — ซอร์สรุ่น 1.2.2; สถานะ CI และการ deploy จริงบันทึกใน GitHub release ของรุ่นนี้
+
+## งานรอบ 1.2.2
+
+- **DONE** คิวต่อเซสชัน, timeout failure, CSRF origin/Fetch Metadata, burst guard สำหรับแชท/รายงาน
+- **DONE** ทดสอบสิทธิ์ HTTP, XSS rendering, dependency failure/recovery และ 20 เซสชันแบบจำลอง
+- **DONE** ค้นหลักฐาน argc/argv และเชื่อมกับชื่อ args ในหนังสือ
+- **RELEASE GATE** ต้องผ่าน live quality ครบ 12 บท, bounded real-AI concurrency, CI, restore check และตรวจรุ่นบน VPS; ดู release และ READINESS-TH.md
 
 ## งานรอบ 1.2.1
 

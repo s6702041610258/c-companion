@@ -1,3 +1,4 @@
+import {createWriteGuard} from './write-guard.mjs';
 import {initQuizState,quizDecision,quizInstruction} from './quiz-state.mjs';
 import {createJobs} from './jobs.mjs';
 import {initReports,createReport} from './reports.mjs';
@@ -140,6 +141,7 @@ async function processMessage(chat,text,signal){
 
 }
 const jobs=createJobs(db,processMessage);
+const guardWrite=createWriteGuard();
 const mime={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.woff2':'font/woff2','.woff':'font/woff','.svg':'image/svg+xml','.png':'image/png','.pdf':'application/pdf'};
 const server=http.createServer(async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
@@ -149,7 +151,9 @@ const server=http.createServer(async(req,res)=>{
  const path=url.pathname.replace(/^\/c-tutor(?=\/)/,'');
  if(req.method!=='GET'&&req.method!=='HEAD'){
   const origin=req.headers.origin;
-  if(origin&&new URL(origin).host!==req.headers.host)throw fail(403,'คำขอมาจากหน้าเว็บที่ไม่ตรงกัน');
+  let originMatches=!origin;
+  if(origin){try{const parsed=new URL(origin);const protocol=(process.env.TRUST_PROXY==='true'&&req.headers['x-forwarded-proto']==='https'||req.socket.encrypted)?'https:':'http:';originMatches=parsed.host===req.headers.host&&parsed.protocol===protocol}catch{originMatches=false}}
+  if(!originMatches||req.headers['sec-fetch-site']==='cross-site')throw fail(403,'คำขอมาจากหน้าเว็บที่ไม่ตรงกัน');
  }
  if(path==='/api/health'){db.prepare('SELECT 1').get();return json(res,200,{ok:true,release:process.env.RELEASE_ID||'development',bookPages:pages.length,configured:!!(base&&key),queue:{active:jobs.queue.active,waiting:jobs.queue.waiting.length},recentFailures:db.prepare("SELECT count(*) n FROM jobs WHERE status='failed' AND updated>?").get(new Date(Date.now()-600000).toISOString()).n})}
  const user=owner(req,res);
@@ -157,13 +161,14 @@ const server=http.createServer(async(req,res)=>{
   return json(res,200,{chapters,configured:!!(base&&key),progress:db.prepare('SELECT chapter FROM progress WHERE owner=?').all(user).map(p=>p.chapter),chats:db.prepare('SELECT c.id,c.title,c.chapter,c.mode,c.created FROM chats c WHERE c.owner=? AND EXISTS (SELECT 1 FROM messages m WHERE m.chat=c.id) ORDER BY c.created DESC LIMIT 50').all(user)});
  }
  if(path==='/api/chats'&&req.method==='POST'){
+  guardWrite('chat',user);
   const b=await body(req);const chapter=Number(b.chapter||0);const mode=b.mode||'ask';
   if(!Number.isInteger(chapter)||chapter<0||chapter>12||!Object.hasOwn(modes,mode))throw fail(400,'กรุณาเลือกบทเรียนและโหมดให้ถูกต้อง');
   const id=randomUUID();db.prepare('INSERT INTO chats VALUES(?,?,?,?,?,?)').run(id,user,'บทสนทนาใหม่',chapter,mode,new Date().toISOString());
   if(chapter)db.prepare('INSERT OR IGNORE INTO progress VALUES(?,?)').run(user,chapter);
   return json(res,201,{id});
  }
- if(path==='/api/reports'&&req.method==='POST')return json(res,201,createReport(db,user,await body(req)));
+ if(path==='/api/reports'&&req.method==='POST'){guardWrite('report',user);return json(res,201,createReport(db,user,await body(req)))}
  const jobMatch=path.match(/^\/api\/jobs\/([a-f0-9-]{36})$/);
  if(jobMatch&&req.method==='GET')return json(res,200,jobs.get(jobMatch[1],user));
  if(jobMatch&&req.method==='DELETE')return json(res,200,jobs.cancel(jobMatch[1],user));
@@ -196,7 +201,7 @@ const server=http.createServer(async(req,res)=>{
  if(range){const start=Number(range[1]),end=range[2]?Math.min(Number(range[2]),size-1):size-1;if(start>end||start>=size){res.writeHead(416,{'Content-Range':'bytes */'+size});return res.end()}
  res.writeHead(206,{'Content-Range':'bytes '+start+'-'+end+'/'+size,'Content-Length':end-start+1});if(req.method==='HEAD')return res.end();createReadStream(file,{start,end}).pipe(res);
  }else{res.setHeader('Content-Length',size);if(req.method==='HEAD')return res.end();createReadStream(file).pipe(res)}
- }catch(e){if(!res.headersSent&&!res.destroyed)json(res,e.status||500,{error:e.status?e.message:'ระบบขัดข้องชั่วคราว กรุณาลองอีกครั้ง'});if(!e.status)console.error('Request error',e.name)}
+ }catch(e){if(e.status===429&&!res.headersSent)res.setHeader('Retry-After',String(e.retryAfter||5));if(!res.headersSent&&!res.destroyed)json(res,e.status||500,{error:e.status?e.message:'ระบบขัดข้องชั่วคราว กรุณาลองอีกครั้ง'});if(!e.status)console.error('Request error',e.name)}
 }).listen(Number(process.env.APP_PORT||8080),'0.0.0.0',()=>console.log('C Companion ready'));
 
 process.on('SIGTERM',()=>{jobs.shutdown();server.close(()=>{db.close();process.exit(0)});setTimeout(()=>process.exit(1),10000).unref()});

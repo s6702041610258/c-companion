@@ -30,11 +30,14 @@ http.createServer(async(req,res)=>{
   const content=input.request==='ทดสอบระบบตีความเสีย'?'invalid json':JSON.stringify({kind,query,confidence:'high'});
   return res.end(JSON.stringify({choices:[{message:{content}}],usage:{prompt_tokens:10,completion_tokens:10}}));
  }
+ if(last.includes('จำลองเซิร์ฟเวอร์ล้ม')){res.statusCode=503;return res.end(JSON.stringify({error:'private-provider-error-secret'}))}
+ if(last.includes('จำลองอ้างอิงผิด'))return res.end(JSON.stringify({choices:[{message:{content:JSON.stringify({answer:'bad',citations:[999],in_scope:true})}}]}));
+ if(last.includes('load-case-'))await new Promise(r=>setTimeout(r,125));
  const page=Number(system.match(/\[หน้า (\d+)/)?.[1]||14);
  const content=system.startsWith('Conversation summary:')
   ?{summary:'สรุปทดสอบจากประวัติที่ส่งจริง: '+JSON.parse(last).material.slice(0,5000)}
   :system.includes('Classify')
   ?{in_scope:true,concepts:['pointers']}
-  :{answer:'คำตอบทดสอบ: พอยน์เตอร์เก็บที่อยู่ของข้อมูล',citations:[page],in_scope:true};
+  :{answer:last.includes('load-case-')?'คำตอบสำหรับ '+last.match(/load-case-\d+/)[0]:'คำตอบทดสอบ: พอยน์เตอร์เก็บที่อยู่ของข้อมูล',citations:[page],in_scope:true};
  res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(content)}}],usage:{prompt_tokens:10,completion_tokens:10}}));
 }).listen(18081,'127.0.0.1');

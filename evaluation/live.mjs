@@ -1,4 +1,4 @@
-import {readFileSync} from 'node:fs';
+import {readFileSync,appendFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 
 const base=process.env.TUTOR_URL?.replace(/\/$/,'');
@@ -8,7 +8,10 @@ const codeCases=[
  {id:'code-grade',question:'เขียนโปรแกรมภาษา C รับคะแนน 0 ถึง 100 แล้วแสดงเกรด A B C D F พร้อมตรวจคะแนนนอกช่วง',codeRequired:true},
  {id:'code-parity',question:'เขียนโปรแกรมภาษา C รับจำนวนเต็มแล้วบอกว่าเป็นเลขคู่หรือเลขคี่',codeRequired:true}
 ];
-const chosen=process.argv.includes('--code')?codeCases:process.argv.includes('--all')?cases:cases.filter(item=>item.id.startsWith('chapter-'));
+const candidates=process.argv.includes('--code')?codeCases:process.argv.includes('--all')?cases:cases.filter(item=>item.id.startsWith('chapter-'));
+const ids=process.argv.find(x=>x.startsWith('--ids='))?.slice(6).split(',');
+const chosen=ids?candidates.filter(item=>ids.includes(item.id)):candidates;
+if(!chosen.length)throw Error('No matching evaluation cases');
 let cookie='';
 
 async function request(path,method='GET',payload){
@@ -24,7 +27,7 @@ async function request(path,method='GET',payload){
 
 let failures=0;
 for(const item of chosen){
- let chatId;
+ let chatId;const evidence={id:item.id,question:item.question,started:new Date().toISOString()};const started=Date.now();
  try{
   const created=await request('/api/chats','POST',{chapter:0,mode:'ask'});
   if(created.status!==201||!created.data.id)throw Error('cannot create test chat');
@@ -33,6 +36,8 @@ for(const item of chosen){
   if(response.status!==200)throw Error(`answer request returned ${response.status}: ${response.data.error||'unknown'}`);
   const answer=response.data.content||'';
   const sources=response.data.sources||[];
+  Object.assign(evidence,{answer,sources,status:response.status});
+  if(process.argv.includes('--show-answers'))console.log(`ANSWER ${item.id}: ${answer.replace(/\s+/g,' ')}`);
   if(!answer.trim())throw Error('empty answer');
   if(item.outOfScope||item.noCitationExpected){if(sources.length)throw Error('answer cited a page that does not support the requested fact')}
   else{
@@ -49,10 +54,12 @@ for(const item of chosen){
    if(/ยังไม่พบเนื้อหา|หนังสือไม่มี|ไม่มีในหนังสือ/.test(answer))throw Error('false missing-content answer');
   }
   console.log(`PASS ${item.id} pages=${sources.map(source=>source.page).join(',')}`);
-  if(process.argv.includes('--show-answers'))console.log(`ANSWER ${item.id}: ${answer.replace(/\s+/g,' ').slice(0,1800)}`);
- }catch(error){failures++;console.error(`FAIL ${item.id}: ${error.message}`)}
+  evidence.pass=true;
+ }catch(error){evidence.pass=false;evidence.error=error.message;failures++;console.error(`FAIL ${item.id}: ${error.message}`)}
  finally{
-  if(chatId){try{const deleted=await request(`/api/chats/${chatId}`,'DELETE');if(deleted.status!==200)console.error(`WARN ${item.id}: test chat was not deleted`)}catch{console.error(`WARN ${item.id}: test chat cleanup failed`)}}
+  evidence.elapsedMs=Date.now()-started;
+  if(chatId){try{const deleted=await request(`/api/chats/${chatId}`,'DELETE');evidence.cleanupStatus=deleted.status;if(deleted.status!==200)console.error(`WARN ${item.id}: test chat was not deleted`)}catch{console.error(`WARN ${item.id}: test chat cleanup failed`)}}
+  if(process.env.EVALUATION_OUTPUT)appendFileSync(process.env.EVALUATION_OUTPUT,JSON.stringify(evidence)+'\n');
  }
 }
 console.log(`${chosen.length-failures}/${chosen.length} live cases passed`);

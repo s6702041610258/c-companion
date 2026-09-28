@@ -3,7 +3,7 @@
   {"id":"chapter-02","question":"ชนิดข้อมูลในภาษา C มีอะไรบ้าง","chapter":2,"pages":[15]},
   {"id":"chapter-03","question":"scanf รับค่าจำนวนเต็มอย่างไร","chapter":3,"pages":[26,27]},
   {"id":"chapter-04","question":"if else ใช้ตัดสินใจอย่างไร","chapter":4,"pages":[33,34,35,36]},
-  {"id":"chapter-05","question":"ลูป for ทำงานอย่างไร","chapter":5,"pages":[43,44]},
+  {"id":"chapter-05","question":"ลูป for ทำงานอย่างไร","chapter":5,"pages":[46,47],"requiredPage":46},
   {"id":"chapter-06","question":"อาร์เรย์ array เก็บข้อมูลหลายค่าอย่างไร","chapter":6,"pages":[50,51]},
   {"id":"chapter-07","question":"พอยน์เตอร์เก็บที่อยู่ของตัวแปรอย่างไร","chapter":7,"pages":[56,57]},
   {"id":"chapter-08","question":"struct ใช้รวมข้อมูลอย่างไร","chapter":8,"pages":[67,68,69]},
