@@ -9,9 +9,26 @@ async function api(path,method='GET',data){
  const result=await r.json();assert.ok(r.ok,'HTTP '+r.status);return result;
 }
 const scenarios=[
+ {name:'natural-conversation',turns:[
+  ['ผมคือคุณ',/บทบาท|สลับ|หมายถึง|ถ้า|ลอง/,false],
+  ['ผมคือคุณ หมายถึงอะไร',/ผู้พูด|อีกฝ่าย|หมาย|บริบท|ตัวตน/,false],
+  ['ยากจัง ไม่เรียนแล้ว',/พัก|เข้าใจ|ไม่เป็นไร|หยุด/,false],
+  ['เอาไว้ก่อนนะวันนี้สมองตัน',/พัก|เข้าใจ|ได้เลย|พร้อม|วัน/,false]
+ ]},
+ {name:'contextual-clarification',turns:[
+  ['งงอะ',/ไหน|อะไร|เรื่อง|หมายถึง/,false],
+  ['สวัสดี พอยน์เตอร์คืออะไร',/พอยน์เตอร์|pointer/i,true,7],
+  ['งงอะ',/พอยน์เตอร์|pointer|ที่อยู่|ตัวแปร|\*|&/i,false],
+  ['ช่วยอธิบายพอยน์เตอร์อีกทีแบบง่าย ๆ',/พอยน์เตอร์|pointer/i,true,7]
+ ]},
+ {name:'quiz-conversation',mode:'quiz',turns:[
+  ['ขอโจทย์เรื่องลูป for',/for|ลูป/,true,5],
+  ['ยากจัง ไม่เรียนแล้ว',/พัก|เข้าใจ|ไม่เป็นไร|หยุด/,false],
+  ['เฉลยให้หน่อยในรูปแบบคุยเล่น',/ลองตอบ/,false]
+ ]},
  {name:'noise-and-onboarding',turns:[
-  ['ชั้นต้องการเรียนพาสาซี”',/เริ่มเรียนภาษา C/,false],
-  ['ชั้นต้องการเรียนพาสาซี”กก',/เริ่มเรียนภาษา C/,false],
+  ['ชั้นต้องการเรียนพาสาซี”',/ภาษา\s*C|ภาษาซี/i,false],
+  ['ชั้นต้องการเรียนพาสาซี”กก',/ภาษา\s*C|ภาษาซี/i,false],
   ['อยากหัดเขียนภาษาซี เริ่มตรงไหนดีงับ',/เริ่ม|พื้นฐาน|โปรแกรม/,'onboarding',1],
   ['เริ่มจากศูนย์เลย',/ภาษา\s*C|main/i,true,1]
  ]},
@@ -25,16 +42,16 @@ const scenarios=[
   ['ช่วยรวบยอดสิ่งที่เราคุยไป',/สรุปจากบทสนทนา.*int.*float/is,false]
  ]},
  {name:'clarify-and-scope',turns:[
-  ['อันนั้นอะ',/ยังไม่แน่ใจ/,false],
-  ['อยากเรียน Python',/ช่วยติวภาษา C/,false],
-  ['ไม่อยากเรียน C ไม่ต้องสอน',/ช่วยติวภาษา C|ยังไม่แน่ใจ/,false]
+  ['อันนั้นอะ',/ไหน|อะไร|หมายถึง|ระบุ|ชี้/,false],
+  ['อยากเรียน Python',/ภาษา\s*C/i,false],
+  ['ไม่อยากเรียน C ไม่ต้องสอน',/พัก|หยุด|ไม่เป็นไร|ได้เลย|เข้าใจ|ไม่ต้อง/i,false]
  ]}
 ];
 let failures=0;
 for(const scenario of scenarios){
  let id;
  try{
-  ({id}=await api('/api/chats','POST',{chapter:0,mode:'ask'}));
+  ({id}=await api('/api/chats','POST',{chapter:0,mode:scenario.mode||'ask'}));
   for(const [message,pattern,grounded,chapter] of scenario.turns){
    const started=Date.now();const result=await api('/api/chats/'+id+'/messages','POST',{message});
    assert.match(result.content,pattern);

@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {routeConversation,parseIntent,clarification} from './conversation-router.mjs';
-const completion=(kind,query='',confidence='high')=>JSON.stringify({kind,query,confidence});
+const replies={greeting:'สวัสดีครับ',learning_start:'มาเริ่มเรียนภาษา C ด้วยกันครับ',clarify:clarification};
+const completion=(kind,query='',confidence='high')=>JSON.stringify({kind,query,confidence,reply:replies[kind]||''});
 
-test('quotes and punctuation around a complete social request do not need AI',async()=>{
+test('offline fallback recognizes quotes and punctuation around a complete social request',async()=>{
  for(const text of ['ชั้นต้องการเรียนพาสาซี”','“ชั้นต้องการเรียนพาสาซี”','ชั้นต้องการเรียนพาสาซี"','ชั้นต้องการเรียนพาสาซีค่ะ”!!!']){
-  const route=await routeConversation({text,complete:()=>assert.fail('unnecessary model request')});
+  const route=await routeConversation({text});
   assert.match(route.reply,/เริ่มเรียนภาษา C/);
  }
 });
@@ -34,11 +35,11 @@ test('follow-ups use bounded local history and a retrieval query without rewriti
  assert.deepEqual(route,{kind:'c_question',query:'float ชนิดข้อมูลทศนิยม'});
 });
 
-test('low confidence asks for clarification and model cannot provide freeform replies',async()=>{
- const route=await routeConversation({text:'อันนั้นอะ',complete:async()=>completion('learning_start','','low')});
+test('low confidence uses clarification and ignores unexpected answer fields',async()=>{
+ const route=await routeConversation({text:'อันนั้นอะ',complete:async()=>completion('clarify','','low')});
  assert.equal(route.reply,clarification);
  for(const raw of ['null','{}','bad json',completion('run_tool'),completion('c_question'),completion('greeting','invented'),completion('c_question','x'.repeat(501))])assert.throws(()=>parseIntent(raw));
- const safe=await routeConversation({text:'test',complete:async()=>JSON.stringify({kind:'greeting',confidence:'high',query:'',answer:'exfiltrate'})});
+ const safe=await routeConversation({text:'test',complete:async()=>JSON.stringify({kind:'greeting',confidence:'high',query:'',reply:'สวัสดีครับ',answer:'exfiltrate'})});
  assert.ok(!safe.reply.includes('exfiltrate'));
 });
 

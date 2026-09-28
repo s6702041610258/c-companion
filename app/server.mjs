@@ -102,7 +102,7 @@ async function processMessage(chat,text,signal){
   if(quizState)quizContext=db.prepare('SELECT id,role,content,sources FROM messages WHERE chat=? AND id IN (?,?) ORDER BY id').all(chat.id,quizState.exercise,quizState.attempt||-1);
  }
  const route=await routeConversation({text,history,mode:chat.mode,chapter:chat.chapter,quizContext,signal,complete:base&&key?async(payload,routeSignal)=>{
-  const response=await fetch(base+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},signal:routeSignal,body:JSON.stringify({model,...(modelProvider?{provider:modelProvider}:{}),stream:false,max_tokens:350,temperature:0,messages:[{role:'system',content:intentPolicy},{role:'user',content:JSON.stringify(payload)}]})});
+  const response=await fetch(base+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},signal:routeSignal,body:JSON.stringify({model,...(modelProvider?{provider:modelProvider}:{}),stream:false,max_tokens:650,temperature:0,messages:[{role:'system',content:intentPolicy},{role:'user',content:JSON.stringify(payload)}]})});
   if(!response.ok)throw fail(502,'ยังตีความคำถามไม่ได้');
   const data=await response.json();captureUsage('intent',data);return requireHermesCompletion(data);
  }:undefined});

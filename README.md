@@ -84,8 +84,8 @@ The list shows the latest 100 reports. No public report listing or public admin 
 Verification: 51 backend tests; prior live misspelled pointer question through Hermes; desktop and 320px mobile report submission, failed-submit retry, optional attachment, cross-session access rejection, and persisted snapshot checks. Test reports were removed after verification.
 
 ## Operations and readiness
-See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.2.2 includes Hermes, app, backup and monitor in the default Compose file.
-Editorial correctness notes additionally reference WG14 N1570 sections 5.1.2.2.1 and 7.21.6.2: scanf conversion-count checks do not validate representability; argv[0] access requires argc > 0.
+See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.3.0 includes Hermes, app, backup and monitor in the default Compose file.
+Editorial correctness notes additionally reference WG14 N1570 sections 5.1.3.0.1 and 7.21.6.2: scanf conversion-count checks do not validate representability; argv[0] access requires argc > 0.
 
 ## การตีความข้อความในรุ่น 1.2.0
 
@@ -104,10 +104,19 @@ Editorial correctness notes additionally reference WG14 N1570 sections 5.1.2.2.1
 
 ตารางสถานะใหม่เป็นการเพิ่มแบบเข้ากันได้ย้อนหลัง ไม่มีการลบหรือแปลงตารางเดิม สำรองข้อมูลจะรวมตารางนี้อัตโนมัติ ย้อนรุ่นได้ด้วย image/config เดิมโดยเก็บ volume ไว้ รุ่นเก่าจะไม่ใช้สถานะฝึกโจทย์ใหม่นี้
 
-## ความพร้อมใช้งานใน 1.2.2
+## ความพร้อมใช้งานใน 1.3.0
 
 - จำกัดงานค้างต่อเซสชัน 2 งาน เพื่อแบ่งคิวกันใช้งาน; งานหมดเวลานับเป็นความล้มเหลวให้ตัวตรวจสุขภาพเห็น
 - ป้องกันการสร้างแชท/รายงานถี่ผิดปกติ และตรวจคำขอข้ามเว็บไซต์
 - ขยายการทดสอบแยกข้อมูล การฟื้นตัวเมื่อ AI ล้ม และ 20 เซสชันพร้อมกันแบบจำลอง
 - แก้การค้น `argc/argv` และอธิบายว่าในหนังสือใช้ชื่อ `args`
 - วิธีตรวจความพร้อมและข้อจำกัด: [readiness](docs/READINESS-TH.md)
+
+## การสนทนาใน 1.3.0
+
+- Hermes ตีความและเขียนคำตอบสนทนาในรอบเดียว ใช้ข้อความจริงและประวัติล่าสุดสำหรับคำทักทาย คุยเล่น ให้กำลังใจ และคำถามกลับเฉพาะจุด
+- คำถาม C และคำขออธิบายเพิ่มเติมยังค้นหนังสือและตรวจอ้างอิง โหมดโจทย์ยังต้องมีคำตอบที่ลองส่งก่อนขอเฉลย
+- ตรวจรูปแบบ/ขนาดคำตอบสนทนาและห้ามโค้ดบล็อก ลิงก์ HTML หรือเลขหน้า; ใช้คำตอบสำรองเมื่อ AI ใช้ไม่ได้ การตรวจนี้ไม่รับประกันความหมายของทุกคำตอบ
+- คำทักทายเรียก AI ด้วย จึงใช้เวลาและโทเคนมากกว่าคำตอบตายตัวเดิม แต่ไม่เรียก AI อีกครั้งเพื่อเรียบเรียงคำตอบสนทนา
+- ไม่เปลี่ยนโมเดล น้ำหนักโมเดล dependencies หรือ schema ฐานข้อมูล ย้อนรุ่นด้วย image/config 1.2.2 และ volume เดิมได้
+- ตรวจหลักฐาน CI และผล Hermes จริงของ commit ที่ปล่อยใน GitHub release

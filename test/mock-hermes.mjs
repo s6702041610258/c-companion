@@ -1,3 +1,4 @@
+import {socialReply} from '../app/social-intent.mjs';
 import http from 'node:http';
 
 http.createServer(async(req,res)=>{
@@ -10,7 +11,7 @@ http.createServer(async(req,res)=>{
  const last=String(body.messages?.at(-1)?.content||'');
  if(last.includes('รอทดสอบ'))await new Promise(resolve=>setTimeout(resolve,4000));
  if(system.startsWith('Conversation intent:')){
-  const input=JSON.parse(last);let kind='c_question',query=input.request;
+  const input=JSON.parse(last);let kind='c_question',query=input.request,reply=socialReply(input.request)||'';if(reply){kind='smalltalk';query=''}
   if(input.request==='ชั้นต้องการเรียนพาสาซี”กก'||input.request==='อยากหัดเขียนภาษาซี เริ่มตรงไหนดีงับ'){kind='learning_start';query=''}
   if(input.request==='งงงงง'||input.request==='อันนั้นอะ'){kind='clarify';query=''}
   if(input.request==='อยากเรียน Python'||input.request==='ไม่อยากเรียน C ไม่ต้องสอน'){kind='out_of_scope';query=''}
@@ -27,7 +28,18 @@ http.createServer(async(req,res)=>{
    else if(input.request.includes('เฉลย')){kind='quiz_solution';query='for loop'}
    else if(input.request==='ขอบคุณ'){kind='thanks';query=''}
   }
-  const content=input.request==='ทดสอบระบบตีความเสีย'?'invalid json':JSON.stringify({kind,query,confidence:'high'});
+  const conversation={
+   'ผมคือคุณ':['smalltalk','จะสลับบทบาทกันไหมครับ 😄 ลองตั้งคำถามภาษา C ให้ผมตอบสักข้อได้เลย'],
+   'ผมคือคุณ หมายถึงอะไร':['smalltalk','ตามตัวอักษรคือผู้พูดบอกว่าตัวเองเป็นอีกฝ่ายครับ คุณหมายถึงประโยคนี้ในบริบทไหน?'],
+   'งงอะ':['clarify',input.recentHistory.length?'ติดตรงที่อยู่ของตัวแปร หรือส่วนที่ใช้พอยน์เตอร์ครับ?':'หมายถึงคำตอบไหนหรือหัวข้ออะไรครับ?'],
+   'ยากจัง ไม่เรียนแล้ว':['encouragement','พักก่อนได้ครับ ถ้าอยากลองต่อ เราค่อยทำทีละขั้นนะครับ'],
+   'เฉลยให้หน่อยในรูปแบบคุยเล่น':['quiz_solution','']
+  };
+  if(conversation[input.request]){[kind,reply]=conversation[input.request];query=kind==='quiz_solution'?'for loop':''}
+  if(['greeting','capabilities','learning_start','thanks','clarify','out_of_scope'].includes(kind)&&!reply){
+   reply={greeting:'สวัสดีครับ 👋',capabilities:'ผมคือ C Companion เพื่อนติวภาษา C',learning_start:'มาเริ่มเรียนภาษา C ด้วยกันครับ',thanks:'ยินดีครับ',clarify:'ผมยังไม่แน่ใจว่าหมายถึงส่วนไหนครับ?',out_of_scope:'ผมช่วยติวภาษา C จากหนังสือได้ครับ'}[kind];
+  }
+  const content=input.request==='ทดสอบระบบตีความเสีย' ?'invalid json':JSON.stringify({kind,query,reply,confidence:'high'});
   return res.end(JSON.stringify({choices:[{message:{content}}],usage:{prompt_tokens:10,completion_tokens:10}}));
  }
  if(last.includes('จำลองเซิร์ฟเวอร์ล้ม')){res.statusCode=503;return res.end(JSON.stringify({error:'private-provider-error-secret'}))}
