@@ -2,6 +2,10 @@
 
 เว็บติวภาษา C ภาษาไทยจากหนังสือที่แนบ พร้อม Hermes Agent ใน Docker ชุดเดียวกัน
 
+## เริ่มใช้งานในภาพเดียว
+
+![อินโฟกราฟิกแสดงวิธีโคลน ติดตั้ง เปิดเว็บ และลำดับการตอบคำถามของ C Companion](docs/images/c-companion-quick-start.png)
+
 **สถานะ 0.3.1-rc.3:** ชุดสำหรับทดลองติดตั้งก่อนประกาศรุ่น 1.0.0 ดูเกณฑ์และผลตรวจใน [docs/RELEASE-GATE-TH.md](docs/RELEASE-GATE-TH.md)
 
 Repository นี้เป็นชุดติดตั้งอิสระสำหรับผู้รับ ไม่มีขั้นตอน deploy ไปยัง VPS ของผู้สร้าง ผู้รับต้องใช้บัญชี AI ของตนเอง ดูขั้นตอนตรวจรุ่นและการย้อนรุ่นใน [docs/RELEASE-PROCESS-TH.md](docs/RELEASE-PROCESS-TH.md)
