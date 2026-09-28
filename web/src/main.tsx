@@ -1,3 +1,4 @@
+import {ReplyLanguagePicker,preferredReplyLanguage,rememberReplyLanguage,type ReplyLanguage} from './ReplyLanguage';
 import {ReportDialog,type ReportTarget} from './ReportDialog';
 import {useSources,SourcesButton,SourcesPanel} from './SourcesPanel';
 import React,{useEffect,useRef,useState} from 'react';
@@ -12,11 +13,11 @@ import './style.css';
 import './theme.css';
 type Chapter={id:number,title:string,subtitle:string,start:number,end:number};
 type Source={page:number,pdfPage:number,chapter:number,title:string,excerpt:string};
-type Message={id?:number,role:'user'|'assistant',content:string,sources:Source[]};
-type Chat={id:string,title:string,chapter:number,mode:Mode};
+type Message={id?:number,role:'user'|'assistant',content:string,sources:Source[],replyLanguage?:ReplyLanguage};
+type Chat={id:string,title:string,chapter:number,mode:Mode,replyLanguage?:ReplyLanguage};
 type Mode='ask'|'tutor'|'quiz';
 const base=location.pathname.startsWith('/c-tutor')?'/c-tutor/':'/';
-async function api(path:string,options?:RequestInit){const r=await fetch(base+'api/'+path,{...options,headers:{'Content-Type':'application/json',...options?.headers}});const data=await r.json();if(!r.ok)throw new Error(data.error||'เชื่อมต่อไม่สำเร็จ');return data}
+async function api(path:string,options?:RequestInit){const r=await fetch(base+'api/'+path,{...options,headers:{'Content-Type':'application/json','X-Reply-Language':preferredReplyLanguage(),...options?.headers}});const data=await r.json();if(!r.ok)throw new Error(data.error||'เชื่อมต่อไม่สำเร็จ');return data}
 const modes=[{id:'ask' as Mode,title:'ถามคำถาม',icon:MessageCircle},{id:'tutor' as Mode,title:'ติวทีละขั้น',icon:GraduationCap},{id:'quiz' as Mode,title:'ฝึกทำโจทย์',icon:Target}];
 type Theme='light'|'dark';
 const themeKey='c-companion-theme';
@@ -28,11 +29,13 @@ function App(){
  const [theme,setTheme]=useState<Theme>(initialTheme);
  const [chapters,setChapters]=useState<Chapter[]>([]),[chats,setChats]=useState<Chat[]>([]),[progress,setProgress]=useState<number[]>([]);
  const [chapter,setChapter]=useState(0),[mode,setMode]=useState<Mode>('ask'),[chatId,setChatId]=useState<string|null>(null);
- const [messages,setMessages]=useState<Message[]>([]),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [messages,setMessages]=useState<Message[]>([]),[draft,setDraft]=useState(''),[answerBusy,setBusy]=useState(false),[error,setError]=useState('');
  const [booting,setBooting]=useState(true),[configured,setConfigured]=useState(false),[sidebar,setSidebar]=useState(false),[library,setLibrary]=useState(false),[search,setSearch]=useState('');
  const [bookPage,setBookPage]=useState<number|null>(null),[deleting,setDeleting]=useState<Chat|null>(null);
  const end=useRef<HTMLDivElement>(null),input=useRef<HTMLTextAreaElement>(null),controller=useRef<AbortController|null>(null),sending=useRef(false);
  const [report,setReport]=useState<ReportTarget|null>(null);
+ const [replyLanguage,setReplyLanguage]=useState<ReplyLanguage>(preferredReplyLanguage),[savingLanguage,setSavingLanguage]=useState(false),[languageNotice,setLanguageNotice]=useState('');
+ const busy=answerBusy||savingLanguage;
  const [queueStage,setQueueStage]=useState('');
  const pendingJob=useRef<string|null>(null);
  const references=useSources(messages,chatId);
@@ -54,18 +57,26 @@ function App(){
   document.addEventListener('keydown',trap);
   return()=>{clearTimeout(timer);background.forEach(e=>e.inert=false);document.removeEventListener('keydown',trap);previous?.focus()};
  },[library,bookPage,deleting,report]);
- function reset(ch=chapter,nextMode=mode){if(busy)return;setChapter(ch);setMode(nextMode);setChatId(null);setMessages([]);setDraft('');setError('');setSidebar(false);setLibrary(false);setTimeout(()=>{if(!document.querySelector('.source-panel[role=dialog]:not([hidden])')&&!document.querySelector('.modal-overlay'))input.current?.focus()},50)}
- async function openChat(chat:Chat){if(busy)return;setError('');setBusy(true);try{const c=await api('chats/'+chat.id);setChatId(c.id);setChapter(c.chapter);setMode(c.mode);setMessages(c.messages);setSidebar(false)}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
+ function reset(ch=chapter,nextMode=mode){if(busy)return;setChapter(ch);setMode(nextMode);setChatId(null);setMessages([]);setReplyLanguage(preferredReplyLanguage());setLanguageNotice('');setDraft('');setError('');setSidebar(false);setLibrary(false);setTimeout(()=>{if(!document.querySelector('.source-panel[role=dialog]:not([hidden])')&&!document.querySelector('.modal-overlay'))input.current?.focus()},50)}
+ async function openChat(chat:Chat){if(busy)return;setError('');setBusy(true);try{const c=await api('chats/'+chat.id);setChatId(c.id);setChapter(c.chapter);setMode(c.mode);setReplyLanguage(c.replyLanguage||'th');setLanguageNotice('');setMessages(c.messages);setSidebar(false)}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
+ async function changeLanguage(language:ReplyLanguage){
+  if(busy||language===replyLanguage)return;
+  setSavingLanguage(true);setError('');
+  try{
+   if(chatId){const saved=await api('chats/'+chatId,{method:'PATCH',body:JSON.stringify({replyLanguage:language})});language=saved.replyLanguage}
+   setReplyLanguage(language);rememberReplyLanguage(language);setLanguageNotice(language==='en'?'Next replies will be in English.':'คำตอบถัดไปจะเป็นภาษาไทย');
+  }catch(e){setError((e as Error).message)}finally{setSavingLanguage(false)}
+ }
  async function send(value=draft){
   const text=value.trim();if(!text||sending.current||busy)return;
   controller.current=new AbortController();
   const signal=controller.current.signal;
   let createdChat=false,submitted=false;
-  sending.current=true;setBusy(true);setError('');setDraft('');
+  sending.current=true;setBusy(true);setError('');setLanguageNotice('');setDraft('');
   let id=chatId;const previous=messages;
   setMessages([...previous,{role:'user',content:text,sources:[]}]);
   try{
-   if(!id){const c=await api('chats',{method:'POST',body:JSON.stringify({chapter,mode}),signal:AbortSignal.timeout(15000)});id=c.id;createdChat=true;setChatId(id)}
+   if(!id){const c=await api('chats',{method:'POST',body:JSON.stringify({chapter,mode,replyLanguage}),signal:AbortSignal.timeout(15000)});id=c.id;createdChat=true;setChatId(id)}
    signal.throwIfAborted();
    const bytes=crypto.getRandomValues(new Uint8Array(16));const requestKey=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('').replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/,'$1-$2-$3-$4-$5');
    // Keep the submission response so cancellation can address the actual server job.
@@ -75,18 +86,22 @@ function App(){
    signal.throwIfAborted();
    let failedPolls=0;
    while(!['completed','failed','cancelled'].includes(job.status)){
-    setQueueStage(job.status==='queued'?'กำลังรอคิว ผู้ช่วยจะตอบให้อัตโนมัติ…':'กำลังอ่านเนื้อหาและเรียบเรียงคำอธิบาย…');
+    setQueueStage(replyLanguage==='en'?(job.status==='queued'?'Waiting in the queue…':'Reading and preparing your answer…'):(job.status==='queued'?'กำลังรอคิว ผู้ช่วยจะตอบให้อัตโนมัติ…':'กำลังอ่านเนื้อหาและเรียบเรียงคำอธิบาย…'));
     await new Promise<void>((resolve,reject)=>{if(signal.aborted){reject(new DOMException('Aborted','AbortError'));return}const abort=()=>{clearTimeout(timer);reject(new DOMException('Aborted','AbortError'))};const timer=setTimeout(()=>{signal.removeEventListener('abort',abort);resolve()},1000);signal.addEventListener('abort',abort,{once:true})});
-    try{job=await api('jobs/'+job.id,{signal});failedPolls=0}catch(e){if(signal.aborted||++failedPolls>=5)throw e;setQueueStage('กำลังเชื่อมต่ออีกครั้ง คำถามยังอยู่ในระบบ…')}
+    try{job=await api('jobs/'+job.id,{signal});failedPolls=0}catch(e){if(signal.aborted||++failedPolls>=5)throw e;setQueueStage(replyLanguage==='en'?'Reconnecting. Your question is still being processed…':'กำลังเชื่อมต่ออีกครั้ง คำถามยังอยู่ในระบบ…')}
    }
    if(job.status!=='completed')throw new Error(job.error||'ยังตอบไม่ได้ กรุณาลองใหม่');
    const answer=job.result;
+   if(answer.preferredLanguage==='th'||answer.preferredLanguage==='en'){
+    setReplyLanguage(answer.preferredLanguage);
+    if(answer.preferredLanguage!==replyLanguage){rememberReplyLanguage(answer.preferredLanguage);setLanguageNotice(answer.preferredLanguage==='en'?'Next replies will be in English.':'คำตอบถัดไปจะเป็นภาษาไทย')}
+   }
    pendingJob.current=null;
    setMessages([...previous,{role:'user',content:text,sources:[]},answer]);
    await refresh().catch(()=>{});
   }catch(e){if(pendingJob.current)await api('jobs/'+pendingJob.current,{method:'DELETE'}).catch(()=>{});
    if(signal.aborted&&createdChat&&!submitted&&id){await api('chats/'+id,{method:'DELETE'}).catch(()=>{});setChatId(null)}
-   setMessages(previous);setDraft(text);setError(signal.aborted||(e as Error).name==='AbortError'?'หยุดรอคำตอบแล้ว คุณแก้คำถามและส่งใหม่ได้':(e as Error).message)}
+   setMessages(previous);setDraft(text);setError(signal.aborted||(e as Error).name==='AbortError'?(replyLanguage==='en'?'Answer cancelled. You can edit and resend your question.':'หยุดรอคำตอบแล้ว คุณแก้คำถามและส่งใหม่ได้'):(e as Error).message)}
   finally{sending.current=false;setBusy(false);controller.current=null;pendingJob.current=null;setQueueStage('');setTimeout(()=>{if(!document.querySelector('.source-panel[role=dialog]:not([hidden])')&&!document.querySelector('.modal-overlay'))input.current?.focus()},50)}
  }
  const suggestions=selected?['อธิบายเรื่อง'+selected.title+' แบบเข้าใจง่าย','ยกตัวอย่างโค้ดในบทที่ '+selected.id,'จุดที่มักสับสนในบทนี้คืออะไร']:['ตัวแปร int กับ float ต่างกันอย่างไร','ลูป for ทำงานอย่างไร อธิบายทีละขั้น','พอยน์เตอร์คืออะไร ช่วยยกตัวอย่าง'];
@@ -101,7 +116,7 @@ function App(){
    <div className="history-heading"><span><History size={15}/> บทสนทนาล่าสุด</span><span>{chats.length}</span></div>
    <div className="history-list">{chats.length===0?<p className="history-empty">คำถามแรกของคุณ<br/>จะเริ่มเรื่องราวตรงนี้</p>:chats.slice(0,15).map(c=><div key={c.id} className={'history-row '+(c.id===chatId?'selected':'')}><button disabled={busy} onClick={()=>openChat(c)} title={c.title}>{c.title}</button><button className="delete-chat" aria-label={'ลบ '+c.title} disabled={busy} onClick={()=>setDeleting(c)}><Trash2 size={14}/></button></div>)}</div>
    <div className="sidebar-book"><div className="little-book"><span>C</span><i>COMPANION</i></div><div><strong>เรียนจากหนังสือเล่มเดียวกัน</strong><p>12 บท · 113 หน้า PDF</p><button onClick={()=>setBookPage(1)}>เปิดหนังสือ <ArrowUpRight size={14}/></button></div></div>
-   <button className="nav-item report-nav" onClick={()=>{setSidebar(false);setReport({})}}><Flag size={17}/>รายงานปัญหา</button><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.3.1</span></div>
+   <button className="nav-item report-nav" onClick={()=>{setSidebar(false);setReport({})}}><Flag size={17}/>รายงานปัญหา</button><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.4.0</span></div>
   </aside>
   <main className="main">
    <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" aria-label="เปิดเมนู" onClick={()=>setSidebar(true)}><Menu size={20}/></button><span className="desktop-icon"><Compass size={19}/></span><span>ห้องติว</span><ChevronRight size={14}/><button onClick={()=>setLibrary(true)}>{label}</button></div><div className="topbar-actions"><SourcesButton panel={references}/><button className="book-button" onClick={()=>setBookPage(selected?selected.start+5:1)}><BookOpen size={16}/><span>เปิดหนังสือ</span></button><button className="theme-toggle" type="button" aria-label={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} title={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} onClick={toggleTheme}>{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}<span>{theme==='dark'?'โหมดสว่าง':'โหมดมืด'}</span></button></div></header>
@@ -119,13 +134,15 @@ function App(){
        <div className="suggestion-heading"><Sparkles size={16}/><span>เริ่มจากคำถามเล็ก ๆ ก็ได้</span></div>
        <div className="suggestions">{suggestions.map((q,i)=><button key={q} disabled={busy||!configured} onClick={()=>send(q)}><span className="suggestion-icon">{i===0?<Code2 size={19}/>:i===1?<RotateCcw size={18}/>:<Search size={18}/>}</span><span>{q}</span><ArrowUpRight size={15}/></button>)}</div>
        <div className="trust-note"><BookOpen size={14}/> ค้นจากหนังสือก่อนตอบ พร้อมแหล่งอ้างอิงให้เปิดอ่าน</div>
-      </div>:<div className="messages"><div className="conversation-context"><span><BookOpen size={14}/>{label}</span><span>{modes.find(m=>m.id===mode)?.title}</span><button disabled={busy} onClick={()=>reset()}>เริ่มใหม่ <Plus size={14}/></button></div>{messages.map((m,i)=><article key={i} className={'message '+m.role}><div className={'message-avatar '+m.role}>{m.role==='assistant'?<Code2 size={18}/>:<span>คุณ</span>}</div><div className="message-body"><div className="message-author">{m.role==='assistant'?'C Companion':'คุณ'}</div><div className="prose"><Markdown components={{pre:CodeBlock}}>{m.content}</Markdown></div>{m.sources?.length>0&&<div className="citation-list"><span>อ่านต่อในหนังสือ</span>{m.sources.map(s=><button key={s.page} onClick={()=>references.openSource(i,s.page)}><BookOpen size={13}/> หน้า {s.page}<ArrowUpRight size={12}/></button>)}</div>}{m.role==='assistant'&&m.id&&<button className="report-answer" onClick={()=>setReport({chatId:chatId||undefined,messageId:m.id,question:messages[i-1]?.content})}><Flag size={13}/>รายงานปัญหาคำตอบนี้</button>}</div></article>)}{busy&&<div className="thinking" role="status"><span className="message-avatar assistant"><Code2 size={18}/></span><div><span className="thinking-dots"><i/><i/><i/></span><p>{queueStage||'กำลังส่งคำถาม…'}</p></div></div>}<div ref={end}/></div>}
+      </div>:<div className="messages"><div className="conversation-context"><span><BookOpen size={14}/>{label}</span><span>{modes.find(m=>m.id===mode)?.title}</span><button disabled={busy} onClick={()=>reset()}>เริ่มใหม่ <Plus size={14}/></button></div>{messages.map((m,i)=><article key={i} className={'message '+m.role}><div className={'message-avatar '+m.role}>{m.role==='assistant'?<Code2 size={18}/>:<span>คุณ</span>}</div><div className="message-body"><div className="message-author">{m.role==='assistant'?'C Companion':'คุณ'}</div><div className="prose" lang={m.role==='assistant'?m.replyLanguage:undefined}><Markdown components={{pre:CodeBlock}}>{m.content}</Markdown></div>{m.sources?.length>0&&<div className="citation-list"><span>อ่านต่อในหนังสือ</span>{m.sources.map(s=><button key={s.page} onClick={()=>references.openSource(i,s.page)}><BookOpen size={13}/> หน้า {s.page}<ArrowUpRight size={12}/></button>)}</div>}{m.role==='assistant'&&m.id&&<button className="report-answer" onClick={()=>setReport({chatId:chatId||undefined,messageId:m.id,question:messages[i-1]?.content})}><Flag size={13}/>รายงานปัญหาคำตอบนี้</button>}</div></article>)}{busy&&<div className="thinking" role="status"><span className="message-avatar assistant"><Code2 size={18}/></span><div><span className="thinking-dots"><i/><i/><i/></span><p>{queueStage||(replyLanguage==='en'?'Sending your question…':'กำลังส่งคำถาม…')}</p></div></div>}<div ref={end}/></div>}
      </div>
      <div className="composer-area">
       {error&&<div className="error-message" role="alert"><AlertCircle size={17}/><span>{error}</span><button aria-label="ปิดข้อความแจ้งเตือน" onClick={()=>setError('')}><X size={16}/></button></div>}
       <div className="mode-toolbar"><div className="mode-tabs" role="group" aria-label="รูปแบบการเรียน">{modes.map(m=><button key={m.id} aria-pressed={mode===m.id} disabled={busy} className={mode===m.id?'active':''} onClick={()=>{if(chatId)reset(chapter,m.id);else setMode(m.id)}}><m.icon size={16}/>{m.title}</button>)}</div><button className="chapter-selector" disabled={busy} onClick={()=>setLibrary(true)}><BookOpen size={14}/><span>{chapter?'บทที่ '+chapter:'ทุกบท'}</span><ChevronRight size={13}/></button></div>
-      {mode==='quiz'&&<p className="mode-hint"><Target size={15}/>ลองตอบโจทย์ก่อน แล้วระบบจะตรวจคำตอบและอธิบายเฉลยหลังคุณส่งคำตอบ</p>}
-      <form className={'composer '+(busy?'is-busy':'')} onSubmit={e=>{e.preventDefault();send()}}><label className="sr-only" htmlFor="question">คำถามภาษา C</label><textarea ref={input} id="question" rows={2} maxLength={3000} value={draft} disabled={busy||!configured} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}} placeholder={mode==='quiz'?'อยากฝึกเรื่องไหน? เช่น ขอแบบฝึกหัดเรื่องลูป':mode==='tutor'?'เรื่องไหนที่ยังไม่เข้าใจ? เราจะค่อย ๆ เรียนไปด้วยกัน':'ถามเรื่องภาษา C ได้เลย เช่น ทำไมลูปนี้ถึงไม่หยุด...'}/><div className="composer-bottom"><span><span className="mini-spark">✦</span> {draft.length>2700?draft.length+'/3,000':'อธิบายเป็นภาษาไทย · อ้างอิงจากหนังสือ'}</span>{busy?<button type="button" className="stop-button" aria-label="หยุดรอคำตอบ" onClick={()=>controller.current?.abort()}><span/></button>:<button className="send-button" type="submit" disabled={!draft.trim()||!configured} aria-label="ส่งคำถาม"><ArrowUp size={21}/></button>}</div></form>
+      <ReplyLanguagePicker value={replyLanguage} disabled={busy} onChange={changeLanguage}/>
+      <div className="language-notice" role="status" aria-live="polite">{savingLanguage?(replyLanguage==='en'?'Saving language…':'กำลังบันทึกภาษา…'):languageNotice}</div>
+      {mode==='quiz'&&<p className="mode-hint"><Target size={15}/>{replyLanguage==='en'?'Try the exercise first. Then I can review your answer and explain the solution.':'ลองตอบโจทย์ก่อน แล้วระบบจะตรวจคำตอบและอธิบายเฉลยหลังคุณส่งคำตอบ'}</p>}
+      <form className={'composer '+(busy?'is-busy':'')} onSubmit={e=>{e.preventDefault();send()}}><label className="sr-only" htmlFor="question">คำถามภาษา C</label><textarea ref={input} id="question" rows={2} maxLength={3000} value={draft} disabled={busy||!configured} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}} placeholder={replyLanguage==='en'?(mode==='quiz'?'Choose a topic, e.g. give me a loop exercise':mode==='tutor'?'What would you like to learn step by step?':'Ask about C programming…'):mode==='quiz'?'อยากฝึกเรื่องไหน? เช่น ขอแบบฝึกหัดเรื่องลูป':mode==='tutor'?'เรื่องไหนที่ยังไม่เข้าใจ? เราจะค่อย ๆ เรียนไปด้วยกัน':'ถามเรื่องภาษา C ได้เลย เช่น ทำไมลูปนี้ถึงไม่หยุด...'}/><div className="composer-bottom"><span><span className="mini-spark">✦</span> {draft.length>2700?draft.length+'/3,000':(replyLanguage==='en'?'English replies · Book references':'อธิบายเป็นภาษาไทย · อ้างอิงจากหนังสือ')}</span>{answerBusy?<button type="button" className="stop-button" aria-label="หยุดรอคำตอบ" onClick={()=>controller.current?.abort()}><span/></button>:<button className="send-button" type="submit" disabled={busy||!draft.trim()||!configured} aria-label="ส่งคำถาม"><ArrowUp size={21}/></button>}</div></form>
       <p className="composer-note">AI อาจตอบคลาดเคลื่อน ตรวจสอบกับหนังสือก่อนนำไปใช้ <span>Enter เพื่อส่ง · Shift + Enter ขึ้นบรรทัดใหม่</span></p>
      </div>
     </section>

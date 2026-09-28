@@ -8,6 +8,7 @@ http.createServer(async(req,res)=>{
  let raw='';for await(const chunk of req)raw+=chunk;
  const body=JSON.parse(raw);
  const system=String(body.messages?.[0]?.content||'');
+ const english=system.includes('AUTHORITATIVE OUTPUT LANGUAGE: English');
  const last=String(body.messages?.at(-1)?.content||'');
  if(last.includes('รอทดสอบ'))await new Promise(resolve=>setTimeout(resolve,4000));
  if(system.startsWith('Conversation intent:')){
@@ -42,7 +43,17 @@ http.createServer(async(req,res)=>{
   if(['greeting','capabilities','learning_start','thanks','clarify','out_of_scope'].includes(kind)&&!reply){
    reply={greeting:'สวัสดีครับ 👋',capabilities:'ผมคือ C Companion เพื่อนติวภาษา C',learning_start:'มาเริ่มเรียนภาษา C ด้วยกันครับ',thanks:'ยินดีครับ',clarify:'ผมยังไม่แน่ใจว่าหมายถึงส่วนไหนครับ?',out_of_scope:'ผมช่วยติวภาษา C จากหนังสือได้ครับ'}[kind];
   }
-  const content=input.request==='ทดสอบระบบตีความเสีย' ?'invalid json':JSON.stringify({kind,query,reply,confidence:'high'});
+  let language;
+  if(input.request==='ต่อไปตอบอังกฤษนะ'){kind='capabilities';query='';reply='Next replies will be in English.';language={target:'en',scope:'chat'}}
+  if(input.request==='ตอบไทยเหมือนเดิม'){kind='capabilities';query='';reply='ต่อไปจะตอบภาษาไทยครับ';language={target:'th',scope:'chat'}}
+  if(input.request==='ข้อนี้ตอบอังกฤษ: พอยน์เตอร์คืออะไร'){kind='c_question';query='pointer';reply='';language={target:'en',scope:'once'}}
+  if(input.request==='ตอบอังกฤษนะ รอทดสอบ'){kind='capabilities';query='';reply='Next replies will be in English.';language={target:'en',scope:'chat'}}
+  if(input.request==='Give me a for-loop exercise'){kind='quiz_new';query='for loop';reply=''}
+  if(input.request==='Show me the solution'){kind='quiz_solution';query='for loop';reply=''}
+  if(input.request==='Translate the current exercise into English'){kind='quiz_translate';query='for loop';reply='';language={target:'en',scope:'once'}}
+  if(input.request==='Summarize our conversation'){kind='summary';query='';reply=''}
+  if(english&&reply&&!language)reply='Hello! I can help you learn C programming.';
+  const content=input.request==='ทดสอบระบบตีความเสีย' ?'invalid json':JSON.stringify({kind,query,reply,language,confidence:'high'});
   return res.end(JSON.stringify({choices:[{message:{content}}],usage:{prompt_tokens:10,completion_tokens:10}}));
  }
  if(last.includes('จำลองเซิร์ฟเวอร์ล้ม')){res.statusCode=503;return res.end(JSON.stringify({error:'private-provider-error-secret'}))}
@@ -50,9 +61,9 @@ http.createServer(async(req,res)=>{
  if(last.includes('load-case-'))await new Promise(r=>setTimeout(r,125));
  const page=Number(system.match(/\[หน้า (\d+)/)?.[1]||14);
  const content=system.startsWith('Conversation summary:')
-  ?{summary:'สรุปทดสอบจากประวัติที่ส่งจริง: '+JSON.parse(last).material.slice(0,5000)}
+  ?{summary:(english?'Test summary of this conversation: ':'สรุปทดสอบจากประวัติที่ส่งจริง: ')+JSON.parse(last).material.slice(0,5000)}
   :system.includes('Classify')
   ?{in_scope:true,concepts:['pointers']}
-  :{answer:last.includes('load-case-')?'คำตอบสำหรับ '+last.match(/load-case-\d+/)[0]:'คำตอบทดสอบ: พอยน์เตอร์เก็บที่อยู่ของข้อมูล',citations:[page],in_scope:true};
+  :{answer:last.includes('load-case-')?'คำตอบสำหรับ '+last.match(/load-case-\d+/)[0]:(english?'Test answer: a pointer stores the address of data.':'คำตอบทดสอบ: พอยน์เตอร์เก็บที่อยู่ของข้อมูล'),citations:[page],in_scope:true};
  res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(content)}}],usage:{prompt_tokens:10,completion_tokens:10}}));
 }).listen(18081,'127.0.0.1');
