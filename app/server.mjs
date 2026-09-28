@@ -13,6 +13,8 @@ import {modes,createSystemPrompt} from './tutor-policy.mjs';
 import {retryValidatedAnswer} from './answer-validation.mjs';
 import {recordModelUsage} from './model-usage.mjs';
 import {socialReply} from './social-intent.mjs';
+import {isConversationSummary} from './conversation-intent.mjs';
+import {summaryPolicy,summarizeConversation} from './conversation-summary.mjs';
 
 const root=resolve(import.meta.dirname,'..');
 const pages=JSON.parse(readFileSync(resolve(root,'book/index.json'),'utf8'));
@@ -89,8 +91,20 @@ async function answer(chat,text,history,signal){
 }
 
 async function processMessage(chat,text,signal){
- const history=db.prepare('SELECT role,content,sources FROM (SELECT id,role,content,sources FROM messages WHERE chat=? ORDER BY id DESC LIMIT 8) ORDER BY id').all(chat.id);
-    const result=await answer(chat,text,history,signal);
+ const summaryRequested=isConversationSummary(text);
+ const history=summaryRequested
+  ?db.prepare('SELECT role,content,sources FROM messages WHERE chat=? ORDER BY id').all(chat.id)
+  :db.prepare('SELECT role,content,sources FROM (SELECT id,role,content,sources FROM messages WHERE chat=? ORDER BY id DESC LIMIT 8) ORDER BY id').all(chat.id);
+ let result;
+ if(summaryRequested){
+  const content=await summarizeConversation(history,text,async part=>{
+   if(!base||!key)throw fail(503,'ยังไม่ได้เชื่อมต่อ Hermes กรุณาให้ผู้ดูแลตั้งค่าการเชื่อมต่อ');
+   const response=await fetch(base+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},signal,body:JSON.stringify({model,...(modelProvider?{provider:modelProvider}:{}),stream:false,max_tokens:1800,temperature:0,messages:[{role:'system',content:summaryPolicy},{role:'user',content:JSON.stringify(part)}]})});
+   if(!response.ok)throw fail(502,'AI ยังสรุปบทสนทนาไม่ได้ กรุณาลองอีกครั้ง');
+   const data=await response.json();captureUsage('summary',data);return requireHermesCompletion(data);
+  },signal);
+  result={answer:content,sources:[]};
+ }else result=await answer(chat,text,history,signal);
     signal.throwIfAborted();
     requireChat(chat.id,chat.owner);
     let messageId;

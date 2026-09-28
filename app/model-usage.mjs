@@ -2,7 +2,7 @@ const insert=`INSERT INTO usage(scope,bucket,count) VALUES(?,?,?)
  ON CONFLICT(scope,bucket) DO UPDATE SET count=count+excluded.count`;
 
 export function recordModelUsage(db,phase,response,at=new Date()){
- if(!['planner','answer'].includes(phase))throw Error('invalid usage phase');
+ if(!['planner','answer','summary'].includes(phase))throw Error('invalid usage phase');
  const bucket=at.toISOString().slice(0,10);
  const usage=response?.usage||{};
  const counters={[`${phase}_requests`]:1};

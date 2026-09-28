@@ -10,7 +10,9 @@ http.createServer(async(req,res)=>{
  const last=String(body.messages?.at(-1)?.content||'');
  if(last.includes('รอทดสอบ'))await new Promise(resolve=>setTimeout(resolve,4000));
  const page=Number(system.match(/\[หน้า (\d+)/)?.[1]||14);
- const content=system.includes('Classify')
+ const content=system.startsWith('Conversation summary:')
+  ?{summary:'สรุปทดสอบจากประวัติที่ส่งจริง: '+JSON.parse(last).material.slice(0,5000)}
+  :system.includes('Classify')
   ?{in_scope:true,concepts:['pointer']}
   :{answer:'คำตอบทดสอบ: พอยน์เตอร์เก็บที่อยู่ของข้อมูล',citations:[page],in_scope:true};
  res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(content)}}],usage:{prompt_tokens:10,completion_tokens:10}}));

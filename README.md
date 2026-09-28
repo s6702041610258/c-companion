@@ -6,7 +6,7 @@
 
 ![อินโฟกราฟิกแสดงวิธีโคลน ติดตั้ง เปิดเว็บ และลำดับการตอบคำถามของ C Companion](docs/images/c-companion-quick-start.png)
 
-**รุ่น 1.1.2:** ชุดติดตั้งสำหรับใช้งานบนเครื่องของตนเอง โหมดสว่างใช้หน้าตาเดิมของ 1.0.0 โหมดมืดเป็นพื้นดำตัดสีอำพัน และบอทตอบคำทักทายหรือคำถามเกี่ยวกับความสามารถได้โดยตรง ดูหลักฐานการตรวจและขอบเขตรุ่นใน [docs/RELEASE-GATE-TH.md](docs/RELEASE-GATE-TH.md)
+**รุ่น 1.1.3:** ชุดติดตั้งสำหรับใช้งานบนเครื่องของตนเอง โหมดสว่างใช้หน้าตาเดิมของ 1.0.0 โหมดมืดเป็นพื้นดำตัดสีอำพัน และบอทรองรับคำพิมพ์ผิดในการแนะนำตัว การเริ่มเรียน และการสรุปตั้งแต่ต้นแชท ดูหลักฐานการตรวจและขอบเขตรุ่นใน [docs/RELEASE-GATE-TH.md](docs/RELEASE-GATE-TH.md)
 
 Repository นี้เป็นชุดติดตั้งอิสระสำหรับผู้รับ ไม่มีขั้นตอน deploy ไปยัง VPS ของผู้สร้าง ผู้รับต้องใช้บัญชี AI ของตนเอง ดูขั้นตอนตรวจรุ่นและการย้อนรุ่นใน [docs/RELEASE-PROCESS-TH.md](docs/RELEASE-PROCESS-TH.md)
 
@@ -46,7 +46,7 @@ Hermes, หน้าเว็บ, หนังสือ และประวั
 ไม่มีระบบบัญชี ประวัติผูกกับ cookie สุ่มเฉพาะ browser; ล้าง cookie แล้วจะเข้าประวัติเดิมไม่ได้
 เครื่องหรือ browser ที่ใช้ร่วมกันเห็นประวัติเดียวกัน ข้อมูลไม่ได้ sync ข้ามอุปกรณ์
 เว็บไม่จำกัดจำนวนคำถามรายชั่วโมง รายวัน หรือจำนวนข้อความต่อบทสนทนา ประมวลผลพร้อมกัน 2 คำขอและมีคิวรอ พร้อมปุ่มยกเลิก ตามรายละเอียดใน docs/OPERATIONS-TH.md
-ส่งบริบทล่าสุด 8 ข้อความให้ AI เพื่อควบคุมขนาดคำขอ ประวัติทั้งหมดคงอยู่ในฐานข้อมูล ข้อจำกัดของผู้ให้บริการ AI เป็นไปตามการตั้งค่าและบัญชีฝั่ง Hermes
+ส่งบริบทล่าสุด 8 ข้อความให้ AI เพื่อควบคุมขนาดคำขอ ประวัติทั้งหมดคงอยู่ในฐานข้อมูล สำหรับคำขอ “สรุปบทสนทนาตั้งแต่เริ่มแชท” ระบบจะอ่านประวัติทั้งหมดในแชทนั้น ส่งให้ผู้ให้บริการ AI เป็นส่วน ๆ และรวมเป็นสรุป จึงอาจเรียก AI หลายครั้งและใช้โทเคนเพิ่มขึ้น หากประมวลผลเกินเวลาหรือยกเลิก จะไม่บันทึกสรุปที่ยังไม่เสร็จ ข้อจำกัดของผู้ให้บริการ AI เป็นไปตามการตั้งค่าและบัญชีฝั่ง Hermes
 ตัวติดตั้งปิดเครื่องมือและความจำของ Hermes สำหรับ API ติวเตอร์ หากเปิดให้ผู้ใช้จำนวนมากต้องประเมินการแยกบัญชีและสิทธิ์เพิ่มเติม
 ผู้ให้บริการ AI และสิทธิ์ API ตั้งที่ Hermes ค่าใช้จ่ายเป็นไปตามผู้ให้บริการ ไม่รวมอยู่ในตัวเว็บ
 ประวัติถูกเก็บใน SQLite พร้อม WAL; ปัจจุบันไม่มีระบบลบบัญชีอัตโนมัติ ผู้เรียนลบบทสนทนาได้ในเมนู
@@ -84,5 +84,5 @@ The list shows the latest 100 reports. No public report listing or public admin 
 Verification: 51 backend tests; prior live misspelled pointer question through Hermes; desktop and 320px mobile report submission, failed-submit retry, optional attachment, cross-session access rejection, and persisted snapshot checks. Test reports were removed after verification.
 
 ## Operations and readiness
-See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.1.2 includes Hermes, app, backup and monitor in the default Compose file.
+See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.1.3 includes Hermes, app, backup and monitor in the default Compose file.
 Editorial correctness notes additionally reference WG14 N1570 sections 5.1.2.2.1 and 7.21.6.2: scanf conversion-count checks do not validate representability; argv[0] access requires argc > 0.
