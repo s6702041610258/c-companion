@@ -6,7 +6,7 @@
 
 ![อินโฟกราฟิกแสดงวิธีโคลน ติดตั้ง เปิดเว็บ และลำดับการตอบคำถามของ C Companion](docs/images/c-companion-quick-start.png)
 
-**รุ่น 1.0.0:** ชุดติดตั้งสำหรับใช้งานบนเครื่องของตนเอง ดูหลักฐานการตรวจและขอบเขตรุ่นใน [docs/RELEASE-GATE-TH.md](docs/RELEASE-GATE-TH.md)
+**รุ่น 1.1.0:** ชุดติดตั้งสำหรับใช้งานบนเครื่องของตนเอง เพิ่มโหมดมืดและปรับหน้าตาเว็บให้อ่านง่ายขึ้น ดูหลักฐานการตรวจและขอบเขตรุ่นใน [docs/RELEASE-GATE-TH.md](docs/RELEASE-GATE-TH.md)
 
 Repository นี้เป็นชุดติดตั้งอิสระสำหรับผู้รับ ไม่มีขั้นตอน deploy ไปยัง VPS ของผู้สร้าง ผู้รับต้องใช้บัญชี AI ของตนเอง ดูขั้นตอนตรวจรุ่นและการย้อนรุ่นใน [docs/RELEASE-PROCESS-TH.md](docs/RELEASE-PROCESS-TH.md)
 
@@ -24,6 +24,8 @@ Repository นี้เป็นชุดติดตั้งอิสระส
 ครั้งแรก Docker จะดาวน์โหลด Hermes และสร้างเว็บ ใช้เวลาตามความเร็วอินเทอร์เน็ต ครั้งถัดไปเปิดได้ด้วยไฟล์เดิม ไม่ต้องล็อกอินซ้ำหรือสร้างอิมเมจซ้ำ หากต้องการเปลี่ยนโมเดล ให้รัน `bash start.sh --choose-model` หรือบน Windows `Start.bat -ChooseModel` หากแก้โค้ดในชุดเดิมโดยไม่เปลี่ยนหมายเลขรุ่น ให้ใช้ `bash start.sh --rebuild` หรือ `Start.bat -Rebuild`
 
 หากโคลนไว้แล้วและต้องการรับการแก้ไขล่าสุด บน Windows ให้เปิด PowerShell ในโฟลเดอร์โปรเจกต์แล้วรัน `git pull --ff-only` ตามด้วย `.\Start.bat -Rebuild` เพื่อสร้างเว็บจากโค้ดใหม่โดยเก็บประวัติใน Docker volume ไว้
+
+ปุ่มรูปดวงจันทร์หรือดวงอาทิตย์มุมขวาบนใช้สลับโหมดสว่างและโหมดมืด เว็บจะใช้ธีมตามเครื่องในครั้งแรก และจำธีมที่เลือกไว้ในเบราว์เซอร์
 
 หากเลือกบัญชี ChatGPT/Codex แล้วระบบแจ้งว่าปิดการลงชื่อเข้าใช้ด้วยรหัสอุปกรณ์ ให้เปิดการตั้งค่านั้นในบัญชี ChatGPT ที่ต้องการใช้ก่อน หรือเลือกผู้ให้บริการแบบ API key แทน การเปิดรหัสอุปกรณ์เป็นการเปลี่ยนค่าความปลอดภัยของบัญชีและใช้กับแอปอื่นที่รองรับวิธีเดียวกันด้วย
 
@@ -82,5 +84,5 @@ The list shows the latest 100 reports. No public report listing or public admin 
 Verification: 51 backend tests; prior live misspelled pointer question through Hermes; desktop and 320px mobile report submission, failed-submit retry, optional attachment, cross-session access rejection, and persisted snapshot checks. Test reports were removed after verification.
 
 ## Operations and readiness
-See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.0.0 includes Hermes, app, backup and monitor in the default Compose file.
+See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.1.0 includes Hermes, app, backup and monitor in the default Compose file.
 Editorial correctness notes additionally reference WG14 N1570 sections 5.1.2.2.1 and 7.21.6.2: scanf conversion-count checks do not validate representability; argv[0] access requires argc > 0.

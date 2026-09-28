@@ -3,12 +3,13 @@ import {useSources,SourcesButton,SourcesPanel} from './SourcesPanel';
 import React,{useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import Markdown from 'react-markdown';
-import {Flag,ArrowUp,ArrowUpRight,BookOpen,Check,ChevronRight,Code2,Compass,Copy,GraduationCap,History,LoaderCircle,Menu,MessageCircle,Plus,Search,Sparkles,Target,Trash2,X,PanelRightClose,ExternalLink,AlertCircle,RotateCcw} from 'lucide-react';
+import {Flag,ArrowUp,ArrowUpRight,BookOpen,Check,ChevronRight,Code2,Compass,Copy,GraduationCap,History,LoaderCircle,Menu,MessageCircle,Plus,Search,Sparkles,Target,Trash2,X,PanelRightClose,ExternalLink,AlertCircle,RotateCcw,Sun,Moon} from 'lucide-react';
 import '@fontsource/noto-sans-thai/400.css';
 import '@fontsource/noto-sans-thai/500.css';
 import '@fontsource/noto-sans-thai/600.css';
 import '@fontsource/noto-sans-thai/700.css';
 import './style.css';
+import './theme.css';
 type Chapter={id:number,title:string,subtitle:string,start:number,end:number};
 type Source={page:number,pdfPage:number,chapter:number,title:string,excerpt:string};
 type Message={id?:number,role:'user'|'assistant',content:string,sources:Source[]};
@@ -17,8 +18,14 @@ type Mode='ask'|'tutor'|'quiz';
 const base=location.pathname.startsWith('/c-tutor')?'/c-tutor/':'/';
 async function api(path:string,options?:RequestInit){const r=await fetch(base+'api/'+path,{...options,headers:{'Content-Type':'application/json',...options?.headers}});const data=await r.json();if(!r.ok)throw new Error(data.error||'เชื่อมต่อไม่สำเร็จ');return data}
 const modes=[{id:'ask' as Mode,title:'ถามคำถาม',icon:MessageCircle},{id:'tutor' as Mode,title:'ติวทีละขั้น',icon:GraduationCap},{id:'quiz' as Mode,title:'ฝึกทำโจทย์',icon:Target}];
+type Theme='light'|'dark';
+const themeKey='c-companion-theme';
+function preferredTheme():Theme{try{const saved=localStorage.getItem(themeKey);if(saved==='light'||saved==='dark')return saved}catch{}return window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+const initialTheme=preferredTheme();
+document.documentElement.dataset.theme=initialTheme;
 function CodeBlock({children,...props}:React.ComponentProps<'pre'>){const [copied,setCopied]=useState(false);const ref=useRef<HTMLPreElement>(null);return <div className="code-wrap"><button className="copy-code" aria-label="คัดลอกโค้ด" onClick={async()=>{try{const text=ref.current?.textContent||'';if(navigator.clipboard)await navigator.clipboard.writeText(text);else {const el=document.createElement('textarea');el.value=text;document.body.append(el);el.select();document.execCommand('copy');el.remove()}setCopied(true);setTimeout(()=>setCopied(false),1800)}catch{setCopied(false)}}}>{copied?<Check size={15}/>:<Copy size={15}/>} {copied?'คัดลอกแล้ว':'คัดลอก'}</button><pre ref={ref} {...props}>{children}</pre></div>}
 function App(){
+ const [theme,setTheme]=useState<Theme>(initialTheme);
  const [chapters,setChapters]=useState<Chapter[]>([]),[chats,setChats]=useState<Chat[]>([]),[progress,setProgress]=useState<number[]>([]);
  const [chapter,setChapter]=useState(0),[mode,setMode]=useState<Mode>('ask'),[chatId,setChatId]=useState<string|null>(null);
  const [messages,setMessages]=useState<Message[]>([]),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -30,6 +37,8 @@ function App(){
  const pendingJob=useRef<string|null>(null);
  const references=useSources(messages,chatId);
  const selected=chapters.find(c=>c.id===chapter),label=selected?.title||'ทุกบทเรียน';
+ useEffect(()=>{document.documentElement.dataset.theme=theme;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#14221e':'#fbfcfa')},[theme]);
+ function toggleTheme(){setTheme(current=>{const next=current==='dark'?'light':'dark';try{localStorage.setItem(themeKey,next)}catch{}return next})}
  async function refresh(){const b=await api('bootstrap');setChapters(b.chapters);setChats(b.chats);setProgress(b.progress);setConfigured(b.configured)}
  useEffect(()=>{refresh().catch(e=>setError(e.message)).finally(()=>setBooting(false));return ()=>controller.current?.abort()},[]);
  useEffect(()=>{end.current?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})},[messages,busy]);
@@ -85,10 +94,10 @@ function App(){
    <div className="history-heading"><span><History size={15}/> บทสนทนาล่าสุด</span><span>{chats.length}</span></div>
    <div className="history-list">{chats.length===0?<p className="history-empty">คำถามแรกของคุณ<br/>จะเริ่มเรื่องราวตรงนี้</p>:chats.slice(0,15).map(c=><div key={c.id} className={'history-row '+(c.id===chatId?'selected':'')}><button disabled={busy} onClick={()=>openChat(c)} title={c.title}>{c.title}</button><button className="delete-chat" aria-label={'ลบ '+c.title} disabled={busy} onClick={()=>setDeleting(c)}><Trash2 size={14}/></button></div>)}</div>
    <div className="sidebar-book"><div className="little-book"><span>C</span><i>COMPANION</i></div><div><strong>เรียนจากหนังสือเล่มเดียวกัน</strong><p>12 บท · 113 หน้า PDF</p><button onClick={()=>setBookPage(1)}>เปิดหนังสือ <ArrowUpRight size={14}/></button></div></div>
-   <button className="nav-item report-nav" onClick={()=>{setSidebar(false);setReport({})}}><Flag size={17}/>รายงานปัญหา</button><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.0.0</span></div>
+   <button className="nav-item report-nav" onClick={()=>{setSidebar(false);setReport({})}}><Flag size={17}/>รายงานปัญหา</button><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.1.0</span></div>
   </aside>
   <main className="main">
-   <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" aria-label="เปิดเมนู" onClick={()=>setSidebar(true)}><Menu size={20}/></button><span className="desktop-icon"><Compass size={19}/></span><span>ห้องติว</span><ChevronRight size={14}/><button onClick={()=>setLibrary(true)}>{label}</button></div><div className="topbar-actions"><SourcesButton panel={references}/><button className="book-button" onClick={()=>setBookPage(selected?selected.start+5:1)}><BookOpen size={16}/><span>เปิดหนังสือ</span></button></div></header>
+   <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" aria-label="เปิดเมนู" onClick={()=>setSidebar(true)}><Menu size={20}/></button><span className="desktop-icon"><Compass size={19}/></span><span>ห้องติว</span><ChevronRight size={14}/><button onClick={()=>setLibrary(true)}>{label}</button></div><div className="topbar-actions"><SourcesButton panel={references}/><button className="book-button" onClick={()=>setBookPage(selected?selected.start+5:1)}><BookOpen size={16}/><span>เปิดหนังสือ</span></button><button className="theme-toggle" type="button" aria-label={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} title={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} onClick={toggleTheme}>{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}<span>{theme==='dark'?'โหมดสว่าง':'โหมดมืด'}</span></button></div></header>
    {booting?<div className="boot-loading"><LoaderCircle className="spin"/> กำลังเตรียมห้องเรียน...</div>:<div className={'workspace '+(references.open?'has-source':'')}>
     <section className="learning">
      <div className="chat-scroll">
