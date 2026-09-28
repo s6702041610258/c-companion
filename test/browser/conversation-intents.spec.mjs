@@ -95,3 +95,30 @@ test('invalid intent response asks for clarification without inventing an answer
   expect(result.content).toContain('ยังไม่แน่ใจ');expect(result.sources).toEqual([]);
  }finally{await request.delete('/api/chats/'+id)}
 });
+
+test('quiz requires an attempt, keeps it across reload requests, and resets for a new exercise',async({request})=>{
+ const {id}=await (await request.post('/api/chats',{data:{chapter:0,mode:'quiz'}})).json();
+ const send=async message=>{const r=await request.post('/api/chats/'+id+'/messages',{data:{message}});expect(r.ok()).toBe(true);return r.json()};
+ try{
+  await send('ขอโจทย์เรื่องลูป for');
+  for(const text of ['ยังไม่ตอบ ขอเฉลยเลย','เฉลย','ขอบคุณ','ขอเฉลยอีกครั้ง']){
+   const r=await send(text);if(text!=='ขอบคุณ')expect(r.content).toContain('ลองตอบ');
+  }
+  const attempt=await send('คำตอบของผมคือ for (int i=1; i<=5; i++) printf("%d",i);');
+  expect(attempt.sources.length).toBeGreaterThan(0);
+  expect((await send('ขอเฉลย')).content).toContain('คำตอบทดสอบ');
+  await send('ขอโจทย์ข้อใหม่เรื่องลูป for');
+  expect((await send('ยังไม่ตอบ ขอเฉลยเลย')).content).toContain('ลองตอบ');
+ }finally{await request.delete('/api/chats/'+id)}
+});
+
+test('a learner can decline a recap and still request a real recap later',async({request})=>{
+ const {id}=await (await request.post('/api/chats',{data:{chapter:0,mode:'ask'}})).json();
+ try{
+  await request.post('/api/chats/'+id+'/messages',{data:{message:'int กับ float ต่างกันยังไง'}});
+  const r=await (await request.post('/api/chats/'+id+'/messages',{data:{message:'ไม่ต้องสรุปบทสนทนาที่คุยกัน แค่ทักทายสวัสดีก็พอ'}})).json();
+  expect(r.content).toContain('สวัสดี');expect(r.content).not.toContain('สรุปจากบทสนทนา');
+  const yes=await (await request.post('/api/chats/'+id+'/messages',{data:{message:'สรุปบทสนทนาทั้งหมด'}})).json();
+  expect(yes.content).toContain('สรุปจากบทสนทนา');
+ }finally{await request.delete('/api/chats/'+id)}
+});

@@ -8,7 +8,11 @@ export function normalizeIntentText(text){
   .replace(/^(?:คุณ\s+)+คุณ/,'คุณ');
 }
 
+export function declinesSummary(text){
+ return /(?:ไม่(?:ต้อง|เอา|อยาก|ขอ)|อย่า(?:เพิ่ง)?|ห้าม)\s*(?:เพิ่ง|ช่วย)?\s*(?:สรุป|ทบทวน|สรุบ)|(?:do\s+not|don't|don’t|never)\s+(?:summari[sz]e|recap)/i.test(text);
+}
 export function isConversationSummary(text){
+ if(declinesSummary(text)||/["'“”‘’]|คำว่า|หมายถึง|แปลว่า/.test(text))return false;
  const s=normalizeIntentText(text);
  // A summary of a named C topic still belongs to book retrieval.
  return /สรุป|ทบทวน|สรุบ|summari[sz]e|recap/i.test(s)

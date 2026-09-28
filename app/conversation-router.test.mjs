@@ -58,3 +58,15 @@ test('semantic summaries follow the same full-history route as explicit summarie
  assert.equal((await routeConversation({text:'สรุปบทสนทนาทั้งหมด',complete:()=>assert.fail()})).kind,'summary');
  assert.equal((await routeConversation({text:'สรุปบทพอยน์เตอร์',complete:async()=>completion('c_question','pointer')})).kind,'c_question');
 });
+
+test('negative and quoted summary mentions are not executed by the shortcut',async()=>{
+ for(const text of ['ไม่ต้องสรุปบทสนทนาที่คุยกัน แค่ทักทายสวัสดีก็พอ','อย่าเพิ่งสรุปสิ่งที่คุยกัน','คำว่า "สรุปบทสนทนา" หมายถึงอะไร']){
+  let called=false;const r=await routeConversation({text,complete:async()=>{called=true;return completion('greeting')}});
+  assert.equal(called,true,text);assert.equal(r.kind,'reply');
+ }
+});
+
+test('summary denial is a veto even if a model incorrectly chooses summary',async()=>{
+ const r=await routeConversation({text:'อย่าเพิ่งสรุปที่คุยกัน',complete:async()=>completion('summary')});
+ assert.equal(r.kind,'reply');assert.equal(r.reply,clarification);
+});

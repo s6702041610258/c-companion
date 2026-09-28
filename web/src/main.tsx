@@ -58,16 +58,21 @@ function App(){
  async function openChat(chat:Chat){if(busy)return;setError('');setBusy(true);try{const c=await api('chats/'+chat.id);setChatId(c.id);setChapter(c.chapter);setMode(c.mode);setMessages(c.messages);setSidebar(false)}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
  async function send(value=draft){
   const text=value.trim();if(!text||sending.current||busy)return;
+  controller.current=new AbortController();
+  const signal=controller.current.signal;
+  let createdChat=false,submitted=false;
   sending.current=true;setBusy(true);setError('');setDraft('');
   let id=chatId;const previous=messages;
   setMessages([...previous,{role:'user',content:text,sources:[]}]);
   try{
-   if(!id){const c=await api('chats',{method:'POST',body:JSON.stringify({chapter,mode})});id=c.id;setChatId(id)}
-   controller.current=new AbortController();
-   const signal=controller.current.signal;
+   if(!id){const c=await api('chats',{method:'POST',body:JSON.stringify({chapter,mode}),signal:AbortSignal.timeout(15000)});id=c.id;createdChat=true;setChatId(id)}
+   signal.throwIfAborted();
    const bytes=crypto.getRandomValues(new Uint8Array(16));const requestKey=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('').replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/,'$1-$2-$3-$4-$5');
-   let job=await api('chats/'+id+'/messages',{method:'POST',body:JSON.stringify({message:text,async:true,requestKey}),signal});
+   // Keep the submission response so cancellation can address the actual server job.
+   let job=await api('chats/'+id+'/messages',{method:'POST',body:JSON.stringify({message:text,async:true,requestKey}),signal:AbortSignal.timeout(15000)});
+   submitted=true;
    pendingJob.current=job.id;
+   signal.throwIfAborted();
    let failedPolls=0;
    while(!['completed','failed','cancelled'].includes(job.status)){
     setQueueStage(job.status==='queued'?'กำลังรอคิว ผู้ช่วยจะตอบให้อัตโนมัติ…':'กำลังอ่านเนื้อหาและเรียบเรียงคำอธิบาย…');
@@ -79,7 +84,9 @@ function App(){
    pendingJob.current=null;
    setMessages([...previous,{role:'user',content:text,sources:[]},answer]);
    await refresh().catch(()=>{});
-  }catch(e){if(pendingJob.current)await api('jobs/'+pendingJob.current,{method:'DELETE'}).catch(()=>{});setMessages(previous);setDraft(text);setError((e as Error).name==='AbortError'?'หยุดรอคำตอบแล้ว คุณแก้คำถามและส่งใหม่ได้':(e as Error).message)}
+  }catch(e){if(pendingJob.current)await api('jobs/'+pendingJob.current,{method:'DELETE'}).catch(()=>{});
+   if(signal.aborted&&createdChat&&!submitted&&id){await api('chats/'+id,{method:'DELETE'}).catch(()=>{});setChatId(null)}
+   setMessages(previous);setDraft(text);setError(signal.aborted||(e as Error).name==='AbortError'?'หยุดรอคำตอบแล้ว คุณแก้คำถามและส่งใหม่ได้':(e as Error).message)}
   finally{sending.current=false;setBusy(false);controller.current=null;pendingJob.current=null;setQueueStage('');setTimeout(()=>{if(!document.querySelector('.source-panel[role=dialog]:not([hidden])')&&!document.querySelector('.modal-overlay'))input.current?.focus()},50)}
  }
  const suggestions=selected?['อธิบายเรื่อง'+selected.title+' แบบเข้าใจง่าย','ยกตัวอย่างโค้ดในบทที่ '+selected.id,'จุดที่มักสับสนในบทนี้คืออะไร']:['ตัวแปร int กับ float ต่างกันอย่างไร','ลูป for ทำงานอย่างไร อธิบายทีละขั้น','พอยน์เตอร์คืออะไร ช่วยยกตัวอย่าง'];
@@ -94,7 +101,7 @@ function App(){
    <div className="history-heading"><span><History size={15}/> บทสนทนาล่าสุด</span><span>{chats.length}</span></div>
    <div className="history-list">{chats.length===0?<p className="history-empty">คำถามแรกของคุณ<br/>จะเริ่มเรื่องราวตรงนี้</p>:chats.slice(0,15).map(c=><div key={c.id} className={'history-row '+(c.id===chatId?'selected':'')}><button disabled={busy} onClick={()=>openChat(c)} title={c.title}>{c.title}</button><button className="delete-chat" aria-label={'ลบ '+c.title} disabled={busy} onClick={()=>setDeleting(c)}><Trash2 size={14}/></button></div>)}</div>
    <div className="sidebar-book"><div className="little-book"><span>C</span><i>COMPANION</i></div><div><strong>เรียนจากหนังสือเล่มเดียวกัน</strong><p>12 บท · 113 หน้า PDF</p><button onClick={()=>setBookPage(1)}>เปิดหนังสือ <ArrowUpRight size={14}/></button></div></div>
-   <button className="nav-item report-nav" onClick={()=>{setSidebar(false);setReport({})}}><Flag size={17}/>รายงานปัญหา</button><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.2.0</span></div>
+   <button className="nav-item report-nav" onClick={()=>{setSidebar(false);setReport({})}}><Flag size={17}/>รายงานปัญหา</button><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.2.1</span></div>
   </aside>
   <main className="main">
    <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" aria-label="เปิดเมนู" onClick={()=>setSidebar(true)}><Menu size={20}/></button><span className="desktop-icon"><Compass size={19}/></span><span>ห้องติว</span><ChevronRight size={14}/><button onClick={()=>setLibrary(true)}>{label}</button></div><div className="topbar-actions"><SourcesButton panel={references}/><button className="book-button" onClick={()=>setBookPage(selected?selected.start+5:1)}><BookOpen size={16}/><span>เปิดหนังสือ</span></button><button className="theme-toggle" type="button" aria-label={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} title={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} onClick={toggleTheme}>{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}<span>{theme==='dark'?'โหมดสว่าง':'โหมดมืด'}</span></button></div></header>

@@ -20,6 +20,13 @@ http.createServer(async(req,res)=>{
   }
   if(input.request==='เริ่มจากศูนย์เลย')query='ภาษา C โครงสร้างโปรแกรมเบื้องต้น';
   if(input.request==='ช่วยรวบยอดสิ่งที่เราคุยไป'){kind='summary';query=''}
+  if(input.request.startsWith('ไม่ต้องสรุป')){kind='greeting';query=''}
+  if(input.mode==='quiz'){
+   if(/ขอโจทย์/.test(input.request)){kind='quiz_new';query='for loop'}
+   else if(input.request.startsWith('คำตอบของผมคือ')){if(!input.quizContext?.some(m=>m.role==='assistant'))throw Error('missing current exercise');kind='quiz_attempt';query='for loop'}
+   else if(input.request.includes('เฉลย')){kind='quiz_solution';query='for loop'}
+   else if(input.request==='ขอบคุณ'){kind='thanks';query=''}
+  }
   const content=input.request==='ทดสอบระบบตีความเสีย'?'invalid json':JSON.stringify({kind,query,confidence:'high'});
   return res.end(JSON.stringify({choices:[{message:{content}}],usage:{prompt_tokens:10,completion_tokens:10}}));
  }
@@ -27,7 +34,7 @@ http.createServer(async(req,res)=>{
  const content=system.startsWith('Conversation summary:')
   ?{summary:'สรุปทดสอบจากประวัติที่ส่งจริง: '+JSON.parse(last).material.slice(0,5000)}
   :system.includes('Classify')
-  ?{in_scope:true,concepts:['pointer']}
+  ?{in_scope:true,concepts:['pointers']}
   :{answer:'คำตอบทดสอบ: พอยน์เตอร์เก็บที่อยู่ของข้อมูล',citations:[page],in_scope:true};
  res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(content)}}],usage:{prompt_tokens:10,completion_tokens:10}}));
 }).listen(18081,'127.0.0.1');

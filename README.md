@@ -84,7 +84,7 @@ The list shows the latest 100 reports. No public report listing or public admin 
 Verification: 51 backend tests; prior live misspelled pointer question through Hermes; desktop and 320px mobile report submission, failed-submit retry, optional attachment, cross-session access rejection, and persisted snapshot checks. Test reports were removed after verification.
 
 ## Operations and readiness
-See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.2.0 includes Hermes, app, backup and monitor in the default Compose file.
+See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.2.1 includes Hermes, app, backup and monitor in the default Compose file.
 Editorial correctness notes additionally reference WG14 N1570 sections 5.1.2.2.1 and 7.21.6.2: scanf conversion-count checks do not validate representability; argv[0] access requires argc > 0.
 
 ## การตีความข้อความในรุ่น 1.2.0
@@ -94,3 +94,12 @@ Editorial correctness notes additionally reference WG14 N1570 sections 5.1.2.2.1
 ขั้นนี้เพิ่มการเรียก AI ไม่เกินหนึ่งรอบต่อข้อความ (นอกเหนือจากการวางแผนโจทย์/ตอบ/สรุป) จำกัดรอ 20 วินาทีและใช้ประวัติเฉพาะแชทล่าสุด 8 ข้อความ ข้อความละไม่เกิน 800 ตัวอักษร บันทึกสถิติรวมในกลุ่ม intent โดยคงข้อความต้นฉบับและโค้ดของผู้เรียนไว้ การตีความยังคลาดเคลื่อนได้และอาจเพิ่มเวลา/โควตา เมื่อขั้นตีความล้มเหลวระบบใช้การค้นเดิมหรือถามกลับ หากบริการ AI ล่มทั้งระบบ การสร้างคำตอบเนื้อหายังคงต้องรอให้บริการกลับมา
 
 สถานะและแผนตรวจ: [PROJECT-STATUS-TH](docs/PROJECT-STATUS-TH.md)
+
+## การแก้จากการทดสอบเบราว์เซอร์ใน 1.2.1
+
+- แยกคำปฏิเสธและการกล่าวถึงคำว่า “สรุป” ออกจากคำขอสรุปจริง
+- ยกเลิกได้ตั้งแต่ช่วงสร้างแชท เมื่อหยุดก่อนส่งงาน AI จะคืนข้อความเดิมและลบแชทว่างที่สร้างในคำขอนั้น การส่ง/รับเลขงานมีเวลารอสูงสุด 15 วินาที; หากเลขงานกลับมาหลังผู้ใช้กดยกเลิก ระบบจะยกเลิกงานนั้นด้วย
+- ฝึกโจทย์เก็บสถานะโจทย์และคำตอบที่ลองไว้ใน SQLite (`quiz_state`) ขอเฉลยก่อนลองตอบจะได้รับคำชวนให้ลองก่อน เปลี่ยนโจทย์แล้วล็อกเฉลยใหม่ ประเมินว่าข้อความเป็นคำตอบด้วย Hermes จึงยังอาจตีความคลาดเคลื่อนได้ ไม่ใช่ระบบป้องกันการทุจริตสอบ
+- คงหลักฐานที่ตรงคำถามก่อนเพิ่มหัวข้อจากขั้นวางแผน เช่น ช่วงดัชนีอาร์เรย์หน้า 51
+
+ตารางสถานะใหม่เป็นการเพิ่มแบบเข้ากันได้ย้อนหลัง ไม่มีการลบหรือแปลงตารางเดิม สำรองข้อมูลจะรวมตารางนี้อัตโนมัติ ย้อนรุ่นได้ด้วย image/config เดิมโดยเก็บ volume ไว้ รุ่นเก่าจะไม่ใช้สถานะฝึกโจทย์ใหม่นี้

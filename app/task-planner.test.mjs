@@ -12,3 +12,9 @@ test('quoting what a page says is not a request to write a program',()=>{
  assert.equal(needsTaskPlan('หนังสือหน้า 15 เขียนว่า long long ขนาด 4 bytes ใช้ได้กับทุกเครื่องไหม'),false);
  assert.equal(needsTaskPlan('ในตารางเขียนว่า int ใช้เก็บอะไร'),false);
 });
+
+test('planning a code question preserves the directly matched array-bound page',()=>{
+ const plan={concepts:['arrays','output']};
+ const refs=taskContexts(pages,plan,0,'int a[3] = {1,2,3}; printf("%d", a[3]); โค้ดนี้พิมพ์ 0 แน่นอนใช่ไหม');
+ assert.equal(refs[0].page,51);
+});

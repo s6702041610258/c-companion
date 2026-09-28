@@ -1,5 +1,5 @@
 # การใช้งานและดูแล C Companion
-รุ่น 1.2.0 • ติดตั้ง Hermes Agent พร้อมเว็บด้วย Docker
+รุ่น 1.2.1 • ติดตั้ง Hermes Agent พร้อมเว็บด้วย Docker
 
 ## เริ่มใช้บนเครื่องใหม่
 1. ติดตั้งและเปิด Docker Desktop หรือ Docker Engine + Compose

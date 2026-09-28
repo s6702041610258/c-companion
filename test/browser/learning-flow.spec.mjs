@@ -90,3 +90,27 @@ test('reading theme follows the system and remembers a manual choice',async({pag
  expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(252, 253, 252)');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });
+
+test('stop during chat creation prevents an AI job and restores the draft',async({page})=>{
+ await page.goto('/');let submitted=0;
+ page.on('request',r=>{if(r.method()==='POST'&&r.url().endsWith('/messages'))submitted++});
+ await page.route('**/api/chats',async route=>{if(route.request().method()!=='POST')return route.continue();const response=await route.fetch();await new Promise(r=>setTimeout(r,750));await route.fulfill({response})});
+ const input=page.getByRole('textbox',{name:'คำถามภาษา C'});const text='พอยน์เตอร์ รอทดสอบ';
+ await input.fill(text);await page.getByRole('button',{name:'ส่งคำถาม',exact:true}).click();
+ await page.getByRole('button',{name:'หยุดรอคำตอบ',exact:true}).click();
+ await expect(page.getByRole('alert')).toContainText('หยุดรอคำตอบแล้ว');
+ await expect(input).toHaveValue(text);expect(submitted).toBe(0);
+ await page.reload();await expect(page.locator('.history-list').getByRole('button',{name:'บทสนทนาใหม่',exact:true})).toHaveCount(0);
+});
+
+test('stop while the job receipt is delayed cancels the actual server job',async({page})=>{
+ await page.goto('/');let jobId='';
+ await page.route('**/api/chats/*/messages',async route=>{const response=await route.fetch();jobId=(await response.json()).id;await new Promise(r=>setTimeout(r,750));await route.fulfill({response})});
+ const text='พอยน์เตอร์ รอทดสอบ';await page.getByRole('textbox',{name:'คำถามภาษา C'}).fill(text);
+ await page.getByRole('button',{name:'ส่งคำถาม',exact:true}).click();
+ await expect.poll(()=>jobId).not.toBe('');
+ await page.getByRole('button',{name:'หยุดรอคำตอบ',exact:true}).click();
+ await expect(page.getByRole('alert')).toContainText('หยุดรอคำตอบแล้ว');
+ await expect.poll(async()=>(await (await page.request.get('/api/jobs/'+jobId)).json()).status).toBe('cancelled');
+ await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toHaveValue(text);
+});
