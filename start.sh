@@ -67,13 +67,7 @@ else
 fi
 docker compose up -d --wait --remove-orphans
 
-if ! docker compose exec -T app node -e '
-const base=process.env.HERMES_BASE_URL.replace(/\/$/, "");
-const headers={Authorization:"Bearer "+process.env.HERMES_API_KEY,"Content-Type":"application/json"};
-const body={model:"hermes-agent",stream:false,max_tokens:32,messages:[{role:"user",content:"Reply with one short word."}]};
-fetch(base+"/chat/completions",{method:"POST",headers,body:JSON.stringify(body),signal:AbortSignal.timeout(120000)})
- .then(async r=>{if(!r.ok)throw Error("Hermes returned "+r.status);const d=await r.json();if(d.hermes?.failed||d.choices?.[0]?.finish_reason==="error"||!d.choices?.[0]?.message?.content)throw Error(d.hermes?.error_code||"Model did not answer");console.log("Hermes และโมเดลตอบได้แล้ว");})
- .catch(e=>{console.error("ตรวจโมเดลไม่ผ่าน: "+e.message);process.exitCode=1});'; then
+if ! docker compose exec -T app node - < ops/check-hermes.mjs; then
   echo "เว็บเปิดแล้ว แต่โมเดลยังตอบไม่ได้ ให้รัน bash start.sh --choose-model เพื่อตั้งค่าใหม่" >&2
   exit 1
 fi

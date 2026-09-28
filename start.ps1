@@ -79,8 +79,12 @@ try {
     }
     Run-Docker compose up -d --wait --remove-orphans
 
-    $check = 'const b=process.env.HERMES_BASE_URL.replace(/\/$/,"");const h={Authorization:"Bearer "+process.env.HERMES_API_KEY,"Content-Type":"application/json"};const d={model:"hermes-agent",stream:false,max_tokens:32,messages:[{role:"user",content:"Reply with one short word."}]};fetch(b+"/chat/completions",{method:"POST",headers:h,body:JSON.stringify(d),signal:AbortSignal.timeout(120000)}).then(async r=>{if(!r.ok)throw Error("Hermes returned "+r.status);const v=await r.json();if(v.hermes?.failed||v.choices?.[0]?.finish_reason==="error"||!v.choices?.[0]?.message?.content)throw Error(v.hermes?.error_code||"Model did not answer");console.log("Hermes and the model responded successfully.")}).catch(e=>{console.error(e.message);process.exitCode=1})'
-    Run-Docker compose exec -T app node -e $check
+    $checkPath = Join-Path $PSScriptRoot 'ops/check-hermes.mjs'
+    $checkSource = Get-Content -LiteralPath $checkPath -Raw -Encoding UTF8
+    $ErrorActionPreference = 'Continue'
+    $checkSource | & docker compose exec -T app node -
+    if ($LASTEXITCODE -ne 0) { throw "Docker command failed (exit $LASTEXITCODE)." }
+    $ErrorActionPreference = 'Stop'
 
     [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot '.setup-ready'), "ready`n")
     $portLine = [System.IO.File]::ReadAllLines($environmentFile) | Where-Object { $_.StartsWith('PORT=') } | Select-Object -Last 1
