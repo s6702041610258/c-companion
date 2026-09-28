@@ -150,3 +150,21 @@ test('encouragement never unlocks a solution disguised as smalltalk',async({requ
   expect((await send('ขอเฉลย')).sources.length).toBeGreaterThan(0);
  }finally{await request.delete('/api/chats/'+id)}
 });
+
+
+test('product help and book author work in ask and quiz without creating an exercise',async({request})=>{
+ for(const mode of ['ask','quiz']){
+  const {id}=await (await request.post('/api/chats',{data:{chapter:0,mode}})).json();
+  try{
+   for(const [message,pattern] of [
+    ['โหมดต่าง ๆ ในระบบทำอะไรได้บ้าง ต่างกันยังไง',/ถามคำถาม.*ติวทีละขั้น.*ฝึกทำโจทย์/],
+    ['หนังสือที่ใช้ใครเขียน',/Soradech Krootjohn.*Mongkol Jadsakul/],
+    ['เปลี่ยนเป็นโหมดติวทีละขั้นให้หน่อย',/เริ่มแชทใหม่.*กดแทนไม่ได้/]
+   ]){
+    const r=await request.post('/api/chats/'+id+'/messages',{data:{message}});expect(r.ok()).toBe(true);
+    const answer=await r.json();expect(answer.content).toMatch(pattern);expect(answer.sources).toEqual([]);
+   }
+   const saved=await (await request.get('/api/chats/'+id)).json();expect(saved.mode).toBe(mode);
+  }finally{await request.delete('/api/chats/'+id)}
+ }
+});
