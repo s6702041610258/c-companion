@@ -18,3 +18,7 @@ test('English unavailable-model fallback and language policy are usable',async()
  const r=await routeConversation({text:'สวัสดี',replyLanguage:'en'});assert.match(r.reply,/Hello/);assert.doesNotMatch(r.reply,/[ก-๙]/);
  assert.match(languagePolicy('en'),/English/);assert.equal(localize('หยุดรอคำตอบแล้ว','en'),'Answer cancelled.');
 });
+test('pure language switches acknowledge in the target language without a second model call',async()=>{
+ let calls=0;const r=await routeConversation({text:'ต่อไปตอบอังกฤษนะ',replyLanguage:'th',complete:async()=>{calls++;return JSON.stringify({kind:'language_change',confidence:'high',query:'',reply:'',language:{target:'en',scope:'chat'}})}});
+ assert.equal(calls,1);assert.equal(r.replyLanguage,'en');assert.equal(r.preferredLanguage,'en');assert.match(r.reply,/English/);assert.doesNotMatch(r.reply,/[ก-๙]/);
+});

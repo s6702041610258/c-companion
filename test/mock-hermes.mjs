@@ -44,15 +44,15 @@ http.createServer(async(req,res)=>{
    reply={greeting:'สวัสดีครับ 👋',capabilities:'ผมคือ C Companion เพื่อนติวภาษา C',learning_start:'มาเริ่มเรียนภาษา C ด้วยกันครับ',thanks:'ยินดีครับ',clarify:'ผมยังไม่แน่ใจว่าหมายถึงส่วนไหนครับ?',out_of_scope:'ผมช่วยติวภาษา C จากหนังสือได้ครับ'}[kind];
   }
   let language;
-  if(input.request==='ต่อไปตอบอังกฤษนะ'){kind='capabilities';query='';reply='Next replies will be in English.';language={target:'en',scope:'chat'}}
-  if(input.request==='ตอบไทยเหมือนเดิม'){kind='capabilities';query='';reply='ต่อไปจะตอบภาษาไทยครับ';language={target:'th',scope:'chat'}}
+  if(input.request==='ต่อไปตอบอังกฤษนะ'){kind='language_change';query='';reply='';language={target:'en',scope:'chat'}}
+  if(input.request==='ตอบไทยเหมือนเดิม'){kind='language_change';query='';reply='';language={target:'th',scope:'chat'}}
   if(input.request==='ข้อนี้ตอบอังกฤษ: พอยน์เตอร์คืออะไร'){kind='c_question';query='pointer';reply='';language={target:'en',scope:'once'}}
-  if(input.request==='ตอบอังกฤษนะ รอทดสอบ'){kind='capabilities';query='';reply='Next replies will be in English.';language={target:'en',scope:'chat'}}
+  if(input.request==='ตอบอังกฤษนะ รอทดสอบ'){kind='language_change';query='';reply='';language={target:'en',scope:'chat'}}
   if(input.request==='Give me a for-loop exercise'){kind='quiz_new';query='for loop';reply=''}
   if(input.request==='Show me the solution'){kind='quiz_solution';query='for loop';reply=''}
   if(input.request==='Translate the current exercise into English'){kind='quiz_translate';query='for loop';reply='';language={target:'en',scope:'once'}}
   if(input.request==='Summarize our conversation'){kind='summary';query='';reply=''}
-  if(english&&reply&&!language)reply='Hello! I can help you learn C programming.';
+  if((english||input.replyLanguage==='en')&&reply&&!language)reply='Hello! I can help you learn C programming.';
   const content=input.request==='ทดสอบระบบตีความเสีย' ?'invalid json':JSON.stringify({kind,query,reply,language,confidence:'high'});
   return res.end(JSON.stringify({choices:[{message:{content}}],usage:{prompt_tokens:10,completion_tokens:10}}));
  }
