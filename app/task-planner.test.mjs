@@ -18,3 +18,8 @@ test('planning a code question preserves the directly matched array-bound page',
  const refs=taskContexts(pages,plan,0,'int a[3] = {1,2,3}; printf("%d", a[3]); โค้ดนี้พิมพ์ 0 แน่นอนใช่ไหม');
  assert.equal(refs[0].page,51);
 });
+
+test('for exercise retains the named loop evidence when adding output prerequisites',()=>{
+ const refs=taskContexts(pages,{inScope:true,concepts:['loops','output']},0,'ขอโจทย์ลูป for พิมพ์เลข 1 ถึง 5 คนละบรรทัด');
+ assert.equal(refs[0].page,46);
+});
