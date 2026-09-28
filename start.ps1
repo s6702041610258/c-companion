@@ -7,16 +7,30 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
+function Test-NativeCommand {
+    param([string]$Executable, [string[]]$Arguments)
+
+    # Windows PowerShell 5.1 can turn redirected native stderr into a terminating
+    # error under Stop. Missing images and non-Git ZIP folders are expected here.
+    $ErrorActionPreference = 'Continue'
+    try {
+        & $Executable @Arguments *> $null
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
+}
+
 function Run-Docker {
+    # Let Docker report stderr, then decide success from its process exit code.
+    $ErrorActionPreference = 'Continue'
     & docker @args
     if ($LASTEXITCODE -ne 0) { throw "Docker command failed (exit $LASTEXITCODE)." }
 }
 
 try {
-    & docker info *> $null
-    if ($LASTEXITCODE -ne 0) { throw 'Docker Desktop is not running.' }
-    & docker compose version *> $null
-    if ($LASTEXITCODE -ne 0) { throw 'Docker Compose is unavailable.' }
+    if (-not (Test-NativeCommand -Executable 'docker' -Arguments @('info'))) { throw 'Docker Desktop is not running.' }
+    if (-not (Test-NativeCommand -Executable 'docker' -Arguments @('compose', 'version'))) { throw 'Docker Compose is unavailable.' }
 
     $environmentFile = Join-Path $PSScriptRoot '.env'
     if (-not (Test-Path $environmentFile)) {
@@ -35,11 +49,12 @@ try {
 
     Write-Host 'Preparing Hermes in Docker. The first download can take several minutes...'
     $hermesImage = 'nousresearch/hermes-agent@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7'
-    & docker image inspect $hermesImage *> $null
-    if ($LASTEXITCODE -ne 0) { Run-Docker compose pull hermes }
+    if (-not (Test-NativeCommand -Executable 'docker' -Arguments @('image', 'inspect', $hermesImage))) {
+        Run-Docker compose pull hermes
+    }
 
     if ($ChooseModel) {
-        & docker compose stop app monitor hermes *> $null
+        [void](Test-NativeCommand -Executable 'docker' -Arguments @('compose', 'stop', 'app', 'monitor', 'hermes'))
         Write-Host 'Choose an AI provider, sign in or enter its API key, and choose a model in the Hermes menu.'
         Run-Docker compose run --rm --no-deps hermes model
         Run-Docker compose run --rm --no-deps --user 10000:10000 --entrypoint /opt/hermes/.venv/bin/python hermes /setup/harden_hermes.py
@@ -49,16 +64,15 @@ try {
     $appVersion = (Get-Content (Join-Path $PSScriptRoot 'package.json') -Raw | ConvertFrom-Json).version
     if (-not $appVersion) { throw 'Cannot read the app version from package.json.' }
     if (Get-Command git -ErrorAction SilentlyContinue) {
-        & git rev-parse --verify HEAD *> $null
-        if ($LASTEXITCODE -eq 0) {
-            & git diff --quiet HEAD
-            if ($LASTEXITCODE -eq 0) { $env:SOURCE_REVISION = (& git rev-parse HEAD).Trim() }
+        if (Test-NativeCommand -Executable 'git' -Arguments @('rev-parse', '--verify', 'HEAD')) {
+            if (Test-NativeCommand -Executable 'git' -Arguments @('diff', '--quiet', 'HEAD')) {
+                $env:SOURCE_REVISION = (& git rev-parse HEAD).Trim()
+            }
         }
     }
     $imageLine = [System.IO.File]::ReadAllLines($environmentFile) | Where-Object { $_.StartsWith('APP_IMAGE=') } | Select-Object -Last 1
     $appImage = if ($imageLine -and $imageLine.Substring(10)) { $imageLine.Substring(10) } else { "c-companion:$appVersion" }
-    & docker image inspect $appImage *> $null
-    if ($Rebuild -or $LASTEXITCODE -ne 0) {
+    if ($Rebuild -or -not (Test-NativeCommand -Executable 'docker' -Arguments @('image', 'inspect', $appImage))) {
         Run-Docker compose build app
     } else {
         Write-Host "Using existing app image: $appImage"
