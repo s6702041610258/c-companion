@@ -1,0 +1,79 @@
+param(
+    [switch]$ChooseModel,
+    [switch]$NoBrowser,
+    [switch]$Rebuild
+)
+
+$ErrorActionPreference = 'Stop'
+Set-Location $PSScriptRoot
+
+function Run-Docker {
+    & docker @args
+    if ($LASTEXITCODE -ne 0) { throw "Docker command failed (exit $LASTEXITCODE)." }
+}
+
+try {
+    & docker info *> $null
+    if ($LASTEXITCODE -ne 0) { throw 'Docker Desktop is not running.' }
+    & docker compose version *> $null
+    if ($LASTEXITCODE -ne 0) { throw 'Docker Compose is unavailable.' }
+
+    $environmentFile = Join-Path $PSScriptRoot '.env'
+    if (-not (Test-Path $environmentFile)) {
+        $bytes = New-Object byte[] 32
+        $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+        try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
+        $gatewayKey = ([System.BitConverter]::ToString($bytes)).Replace('-', '').ToLowerInvariant()
+        $content = "HERMES_BASE_URL=http://hermes:8642/v1`nHERMES_API_KEY=$gatewayKey`nHERMES_MODEL=hermes-agent`nBIND_ADDRESS=127.0.0.1`nPORT=8091`n"
+        [System.IO.File]::WriteAllText($environmentFile, $content, [System.Text.UTF8Encoding]::new($false))
+        $gatewayKey = $null
+    } elseif (-not ([System.IO.File]::ReadAllText($environmentFile).Contains('HERMES_BASE_URL=http://hermes:8642/v1'))) {
+        throw 'This folder has settings from the old external-Hermes release. Extract the bundled release into a new folder.'
+    }
+
+    if (-not (Test-Path '.setup-ready')) { $ChooseModel = $true }
+
+    Write-Host 'Preparing Hermes in Docker. The first download can take several minutes...'
+    $hermesImage = 'nousresearch/hermes-agent@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7'
+    & docker image inspect $hermesImage *> $null
+    if ($LASTEXITCODE -ne 0) { Run-Docker compose pull hermes }
+
+    if ($ChooseModel) {
+        & docker compose stop app monitor hermes *> $null
+        Write-Host 'Choose an AI provider, sign in or enter its API key, and choose a model in the Hermes menu.'
+        Run-Docker compose run --rm --no-deps hermes model
+        Run-Docker compose run --rm --no-deps --user 10000:10000 --entrypoint /opt/hermes/.venv/bin/python hermes /setup/harden_hermes.py
+    }
+
+    Write-Host 'Building and starting C Companion...'
+    $appVersion = (Get-Content (Join-Path $PSScriptRoot 'package.json') -Raw | ConvertFrom-Json).version
+    if (-not $appVersion) { throw 'Cannot read the app version from package.json.' }
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        & git rev-parse --verify HEAD *> $null
+        if ($LASTEXITCODE -eq 0) {
+            & git diff --quiet HEAD
+            if ($LASTEXITCODE -eq 0) { $env:SOURCE_REVISION = (& git rev-parse HEAD).Trim() }
+        }
+    }
+    $imageLine = [System.IO.File]::ReadAllLines($environmentFile) | Where-Object { $_.StartsWith('APP_IMAGE=') } | Select-Object -Last 1
+    $appImage = if ($imageLine -and $imageLine.Substring(10)) { $imageLine.Substring(10) } else { "c-companion:$appVersion" }
+    & docker image inspect $appImage *> $null
+    if ($Rebuild -or $LASTEXITCODE -ne 0) {
+        Run-Docker compose build app
+    } else {
+        Write-Host "Using existing app image: $appImage"
+    }
+    Run-Docker compose up -d --wait --remove-orphans
+
+    $check = 'const b=process.env.HERMES_BASE_URL.replace(/\/$/,"");const h={Authorization:"Bearer "+process.env.HERMES_API_KEY,"Content-Type":"application/json"};const d={model:"hermes-agent",stream:false,max_tokens:32,messages:[{role:"user",content:"Reply with one short word."}]};fetch(b+"/chat/completions",{method:"POST",headers:h,body:JSON.stringify(d),signal:AbortSignal.timeout(120000)}).then(async r=>{if(!r.ok)throw Error("Hermes returned "+r.status);const v=await r.json();if(v.hermes?.failed||v.choices?.[0]?.finish_reason==="error"||!v.choices?.[0]?.message?.content)throw Error(v.hermes?.error_code||"Model did not answer");console.log("Hermes and the model responded successfully.")}).catch(e=>{console.error(e.message);process.exitCode=1})'
+    Run-Docker compose exec -T app node -e $check
+
+    [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot '.setup-ready'), "ready`n")
+    $portLine = [System.IO.File]::ReadAllLines($environmentFile) | Where-Object { $_.StartsWith('PORT=') } | Select-Object -Last 1
+    $listenPort = if ($portLine) { $portLine.Substring(5) } else { '8091' }
+    Write-Host "Ready at http://localhost:$listenPort"
+    if (-not $NoBrowser) { Start-Process "http://localhost:$listenPort" }
+} catch {
+    [Console]::Error.WriteLine($_.Exception.Message)
+    exit 1
+}

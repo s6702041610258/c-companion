@@ -1,0 +1,117 @@
+name: c-companion
+services:
+  hermes:
+    image: nousresearch/hermes-agent@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7
+    command: [gateway, run]
+    restart: unless-stopped
+    environment:
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: "0.0.0.0"
+      API_SERVER_KEY: ${HERMES_API_KEY:?Run the launcher to configure Hermes}
+      HERMES_DASHBOARD: "0"
+      HERMES_UID: "10000"
+      HERMES_GID: "10000"
+    volumes:
+      - hermes-data:/opt/data
+      - ./installer/harden_hermes.py:/setup/harden_hermes.py:ro
+    mem_limit: 1536m
+    cpus: 1.0
+    pids_limit: 192
+    security_opt: [no-new-privileges:true]
+    cap_drop: [NET_RAW]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+    healthcheck:
+      test: ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8642/health', timeout=3).read()"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+  app:
+    image: ${APP_IMAGE:-c-companion:0.3.1-rc.3}
+    build:
+      context: .
+      args:
+        RELEASE_ID: ${RELEASE_ID:-0.3.1-rc.3}
+        SOURCE_REVISION: ${SOURCE_REVISION:-unknown}
+    depends_on:
+      hermes:
+        condition: service_healthy
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 15s
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8091}:8080"
+    env_file: .env
+    volumes:
+      - tutor-data:/app/data
+      - ./book/book.pdf:/app/book/book.pdf:ro,Z
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 384m
+    cpus: 0.75
+    pids_limit: 80
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "2"}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+  backup:
+    depends_on:
+      app:
+        condition: service_healthy
+    image: ${APP_IMAGE:-c-companion:0.3.1-rc.3}
+    command: ["node", "ops/backup.mjs"]
+    restart: unless-stopped
+    init: true
+    user: node
+    volumes:
+      - tutor-data:/data:ro
+      - backups-data:/backups
+    read_only: true
+    tmpfs: ["/tmp:size=32m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 40
+    network_mode: none
+    logging:
+      driver: json-file
+      options: {max-size: "3m", max-file: "2"}
+  monitor:
+    depends_on:
+      app:
+        condition: service_healthy
+    image: ${APP_IMAGE:-c-companion:0.3.1-rc.3}
+    command: ["node", "ops/monitor.mjs"]
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    volumes:
+      - backups-data:/backups:ro
+      - ops-state-data:/state
+    read_only: true
+    tmpfs: ["/tmp:size=16m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 96m
+    cpus: 0.2
+    pids_limit: 40
+    logging:
+      driver: json-file
+      options: {max-size: "3m", max-file: "2"}
+
+volumes:
+  tutor-data:
+  hermes-data:
+  backups-data:
+  ops-state-data:

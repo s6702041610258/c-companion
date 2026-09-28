@@ -1,0 +1,15 @@
+node_modules
+__pycache__/
+.git
+data
+.env
+.setup-ready
+book/book.pdf
+*.tar.gz
+deploy/
+releases/
+
+backups/
+ops-state/
+ops-private/
+evaluation/results*.json

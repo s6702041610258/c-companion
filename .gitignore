@@ -1,0 +1,16 @@
+node_modules/
+__pycache__/
+dist/
+data/
+.env
+*.tar.gz
+
+backups/
+ops-state/
+ops-private/
+evaluation/results*.json
+evaluation/*.log
+
+.setup-ready
+test-results/
+playwright-report/

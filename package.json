@@ -1,0 +1,27 @@
+{
+  "name": "c-companion",
+  "version": "0.3.1-rc.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "test": "node --test app/*.test.mjs",
+    "test:e2e": "playwright test",
+    "evaluate": "node evaluation/check.mjs",
+    "evaluate:live": "node evaluation/live.mjs"
+  },
+  "dependencies": {
+    "@fontsource/noto-sans-thai": "^5.2.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0"
+  }
+}
