@@ -12,6 +12,7 @@ import {retrieve} from './retrieval.mjs';
 import {modes,createSystemPrompt} from './tutor-policy.mjs';
 import {retryValidatedAnswer} from './answer-validation.mjs';
 import {recordModelUsage} from './model-usage.mjs';
+import {socialReply} from './social-intent.mjs';
 
 const root=resolve(import.meta.dirname,'..');
 const pages=JSON.parse(readFileSync(resolve(root,'book/index.json'),'utf8'));
@@ -49,6 +50,8 @@ async function body(req){
 }
 function requireChat(id,user){const chat=db.prepare('SELECT * FROM chats WHERE id=? AND owner=?').get(id,user);if(!chat)throw fail(404,'ไม่พบบทสนทนานี้');return chat}
 async function answer(chat,text,history,signal){
+ const social=socialReply(text);
+ if(social)return {answer:social,citations:[],inScope:false,sources:[]};
  const previous=history.filter(m=>m.role==='user').slice(-4).map(m=>m.content).join(' ');
  let refs=retrieve(pages,text,chat.chapter,previous);
  if(needsTaskPlan(text)||history.some(m=>m.role==='user'&&needsTaskPlan(m.content))){

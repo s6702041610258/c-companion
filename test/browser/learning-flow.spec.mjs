@@ -1,5 +1,22 @@
 import {test,expect} from '@playwright/test';
 
+test('greets learners and explains the tutor without pretending to cite the book',async({page})=>{
+ await page.goto('/');
+ const question=page.getByRole('textbox',{name:'คำถามภาษา C'});
+ await question.fill('สวัสดี');
+ await page.getByRole('button',{name:'ส่งคำถาม'}).click();
+ await expect(page.getByText(/สวัสดีครับ.*C Companion/)).toBeVisible();
+ await expect(page.getByRole('button',{name:/หน้า \d+/})).toHaveCount(0);
+ await question.fill('คุณคือเเชทบอทเกี่ยวกับอะไรทำอะไรได้บ้าง &#x20;');
+ await page.getByRole('button',{name:'ส่งคำถาม'}).click();
+ await expect(page.getByText(/ผมคือ C Companion เพื่อนติวภาษา C/)).toBeVisible();
+ await expect(page.getByRole('button',{name:/หน้า \d+/})).toHaveCount(0);
+ await question.fill('สวัสดี printf ใช้ยังไง');
+ await page.getByRole('button',{name:'ส่งคำถาม'}).click();
+ await expect(page.getByText('คำตอบทดสอบ: พอยน์เตอร์เก็บที่อยู่ของข้อมูล')).toBeVisible();
+ await expect(page.getByRole('button',{name:/หน้า \d+/}).first()).toBeVisible();
+});
+
 test('learner receives a cited answer and reports a problem',async({page})=>{
  await page.goto('/');
  await page.getByRole('textbox',{name:'คำถามภาษา C'}).fill('พอยน์เตอร์คืออะไร');
