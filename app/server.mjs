@@ -108,7 +108,7 @@ async function processMessage(chat,text,signal){
  let quiz={kind:'pass'};
  if(chat.mode==='quiz'){
   quiz={...quizDecision(quizState,route,text),state:quizState};
-  if(quizState&&['attempt','feedback'].includes(quiz.kind))history=[...quizContext,...history.filter(m=>!quizContext.some(a=>a.id===m.id))];
+  if(quizState&&['attempt','feedback'].includes(quiz.kind))history=[...quizContext,...history.filter(m=>!quizContext.some(a=>a.id===m.id))].sort((a,b)=>a.id-b.id);
  }
  let result;
  if(quiz.kind==='blocked')result={answer:quiz.reply,sources:[]};
