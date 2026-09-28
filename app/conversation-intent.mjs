@@ -3,7 +3,7 @@ export function normalizeIntentText(text){
  return text.normalize('NFC').replace(/&(?:#x20|#32|nbsp);?/gi,' ')
   .replace(/[\u200b-\u200d\ufeff]/g,'').replace(/เเ/g,'แ')
   .replace(/พาสา|ภาสา/g,'ภาษา').replace(/บ้าว/g,'บ้าง')
-  .replace(/[\s!?.…\p{Extended_Pictographic}]+$/gu,'').trim().toLowerCase()
+  .replace(/^[\s"'“”‘’«»]+|[\s"'“”‘’«»!?.…\p{Extended_Pictographic}]+$/gu,'').trim().toLowerCase()
   .replace(/(?:นะครับ|นะคะ|ครับ|ค่ะ|คะ|ค้าบ|จ้า|จ๊ะ)\s*$/u,'').trim()
   .replace(/^(?:คุณ\s+)+คุณ/,'คุณ');
 }

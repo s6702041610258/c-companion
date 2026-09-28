@@ -6,7 +6,7 @@
 
 ![อินโฟกราฟิกแสดงวิธีโคลน ติดตั้ง เปิดเว็บ และลำดับการตอบคำถามของ C Companion](docs/images/c-companion-quick-start.png)
 
-**รุ่น 1.1.3:** ชุดติดตั้งสำหรับใช้งานบนเครื่องของตนเอง โหมดสว่างใช้หน้าตาเดิมของ 1.0.0 โหมดมืดเป็นพื้นดำตัดสีอำพัน และบอทรองรับคำพิมพ์ผิดในการแนะนำตัว การเริ่มเรียน และการสรุปตั้งแต่ต้นแชท ดูหลักฐานการตรวจและขอบเขตรุ่นใน [docs/RELEASE-GATE-TH.md](docs/RELEASE-GATE-TH.md)
+**รุ่น 1.2.0:** ชุดติดตั้งสำหรับใช้งานบนเครื่องของตนเอง โหมดสว่างใช้หน้าตาเดิมของ 1.0.0 โหมดมืดเป็นพื้นดำตัดสีอำพัน และบอทรองรับคำพิมพ์ผิดในการแนะนำตัว การเริ่มเรียน และการสรุปตั้งแต่ต้นแชท ดูหลักฐานการตรวจและขอบเขตรุ่นใน [docs/RELEASE-GATE-TH.md](docs/RELEASE-GATE-TH.md)
 
 Repository นี้เป็นชุดติดตั้งอิสระสำหรับผู้รับ ไม่มีขั้นตอน deploy ไปยัง VPS ของผู้สร้าง ผู้รับต้องใช้บัญชี AI ของตนเอง ดูขั้นตอนตรวจรุ่นและการย้อนรุ่นใน [docs/RELEASE-PROCESS-TH.md](docs/RELEASE-PROCESS-TH.md)
 
@@ -84,5 +84,13 @@ The list shows the latest 100 reports. No public report listing or public admin 
 Verification: 51 backend tests; prior live misspelled pointer question through Hermes; desktop and 320px mobile report submission, failed-submit retry, optional attachment, cross-session access rejection, and persisted snapshot checks. Test reports were removed after verification.
 
 ## Operations and readiness
-See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.1.3 includes Hermes, app, backup and monitor in the default Compose file.
+See docs/OPERATIONS-TH.md for backups, restoration drills, queue behavior, local monitoring and rollback. Version 1.2.0 includes Hermes, app, backup and monitor in the default Compose file.
 Editorial correctness notes additionally reference WG14 N1570 sections 5.1.2.2.1 and 7.21.6.2: scanf conversion-count checks do not validate representability; argv[0] access requires argc > 0.
+
+## การตีความข้อความในรุ่น 1.2.0
+
+ข้อความทักทายหรือเริ่มเรียนที่ชัดเจนตอบได้โดยตรง สำหรับข้อความอื่น Hermes ช่วยแยกเจตนาและขยายคำค้นจากบริบทล่าสุด เช่น คำพิมพ์ผิด เครื่องหมายส่วนเกิน และ “แล้วแบบที่สองล่ะ” จากนั้นคำถาม C จึงค้นหนังสือและตรวจอ้างอิง ถ้าความหมายกำกวม ระบบถามกลับแทนการเดาหัวข้อ
+
+ขั้นนี้เพิ่มการเรียก AI ไม่เกินหนึ่งรอบต่อข้อความ (นอกเหนือจากการวางแผนโจทย์/ตอบ/สรุป) จำกัดรอ 20 วินาทีและใช้ประวัติเฉพาะแชทล่าสุด 8 ข้อความ ข้อความละไม่เกิน 800 ตัวอักษร บันทึกสถิติรวมในกลุ่ม intent โดยคงข้อความต้นฉบับและโค้ดของผู้เรียนไว้ การตีความยังคลาดเคลื่อนได้และอาจเพิ่มเวลา/โควตา เมื่อขั้นตีความล้มเหลวระบบใช้การค้นเดิมหรือถามกลับ หากบริการ AI ล่มทั้งระบบ การสร้างคำตอบเนื้อหายังคงต้องรอให้บริการกลับมา
+
+สถานะและแผนตรวจ: [PROJECT-STATUS-TH](docs/PROJECT-STATUS-TH.md)

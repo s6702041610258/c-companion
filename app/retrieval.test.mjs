@@ -23,3 +23,10 @@ test('int versus float comparison starts with the actual type table',()=>{
   assert.equal(retrieve(pages,question)[0]?.page,15,question);
  }
 });
+
+test('beginner program structure is not confused with the struct data type',()=>{
+ const refs=retrieve(pages,'พื้นฐานภาษา C สำหรับผู้เริ่มต้นจากศูนย์ โครงสร้างโปรแกรม C เบื้องต้น');
+ assert.equal(refs[0].chapter,1);
+ assert.ok(refs.every(p=>p.chapter!==8));
+ assert.equal(retrieve(pages,'struct โครงสร้างข้อมูล')[0].chapter,8);
+});

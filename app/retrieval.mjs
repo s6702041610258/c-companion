@@ -1,13 +1,18 @@
 import {normalizeQuery} from './query-normalization.mjs';
 import {chapters} from './curriculum.mjs';
 const dictionary=[
-['ไฟล์ต้นฉบับ','source compilation linking'],['คอมไพเลอร์','compiler compilation'],['แปลภาษา','compiler compilation'],['ลิงก์','linking linker'],
+['โครงสร้างโปรแกรม','program main compilation'],['โครงสร้างของโปรแกรม','program main compilation'],['ไฟล์ต้นฉบับ','source compilation linking'],['คอมไพเลอร์','compiler compilation'],['แปลภาษา','compiler compilation'],['ลิงก์','linking linker'],
 ['ตัวแปร','variable identifier assignment'],['ชนิดข้อมูล','type int float double char'],['จำนวนเต็ม','int integer'],['ทศนิยม','float double precision'],
 ['แสดงผล','printf output'],['พิมพ์','printf output'],['รับค่า','scanf input'],['รับข้อมูล','scanf input'],['ลูป','loop for while iteration'],['วนซ้ำ','loop for while iteration'],['ทำซ้ำ','loop for while iteration'],
 ['เงื่อนไข','if else switch condition selection'],['อาร์เรย์','array index'],['อาเรย์','array index'],['พอยน์เตอร์','pointer address indirection'],['พอยเตอร์','pointer address'],
 ['สตริง','string char'],['ข้อความ','string'],['ฟังก์ชัน','function parameter return'],['ฟังชัน','function'],['ไฟล์','file stream fopen'],['โครงสร้าง','struct structure'],['ผังงาน','flowchart'],['คอมไพล','compiler compilation'],['หน่วยความจำ','memory address pointer'],['ตัวดำเนินการ','operator'],['โปรเจกต์','project header'],['ค่าคงที่','constant macro'],['ภาษา','language'],['พารามิเตอร์','parameter argument'],['คืนค่า','return function'],['ตำแหน่ง','address index'],['บวก','addition operator'],['ลบ','subtraction operator'],['หาร','division operator'],['คูณ','multiplication operator']
 ];
-export function terms(query){let s=normalizeQuery(query).toLowerCase();for(const [th,en] of dictionary)if(s.includes(th)&&!(th==='ภาษา'&&dictionary.some(([other])=>other!=='ภาษา'&&s.includes(other))))s+=' '+en;return [...new Set(s.match(/[a-z_][a-z_0-9]*/g)||[])].filter(x=>!['the','what','how','is','a','an','c','me','please','explain','data','types','datatype','datatypes'].includes(x));}
+export function terms(query){
+ let s=normalizeQuery(query).toLowerCase();
+ const matched=dictionary.filter(([th])=>s.includes(th)&&!(th==='โครงสร้าง'&&/โครงสร้าง(?:ของ)?โปรแกรม/.test(s)&&!/\bstruct\b/i.test(s)));
+ for(const [th,en] of matched)if(th!=='ภาษา'||matched.length===1)s+=' '+en;
+ return [...new Set(s.match(/[a-z_][a-z_0-9]*/g)||[])].filter(x=>!['the','what','how','is','a','an','c','me','please','explain','data','types','datatype','datatypes'].includes(x));
+}
 function pageAnchors(query,needles){
  const hints=[];
  const add=page=>{if(!hints.includes(page))hints.push(page)};
