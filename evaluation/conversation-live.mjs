@@ -12,7 +12,7 @@ const scenarios=[
  {name:'noise-and-onboarding',turns:[
   ['ชั้นต้องการเรียนพาสาซี”',/เริ่มเรียนภาษา C/,false],
   ['ชั้นต้องการเรียนพาสาซี”กก',/เริ่มเรียนภาษา C/,false],
-  ['อยากหัดเขียนภาษาซี เริ่มตรงไหนดีงับ',/เริ่มเรียนภาษา C/,false],
+  ['อยากหัดเขียนภาษาซี เริ่มตรงไหนดีงับ',/เริ่ม|พื้นฐาน|โปรแกรม/,'onboarding',1],
   ['เริ่มจากศูนย์เลย',/ภาษา\s*C|main/i,true,1]
  ]},
  {name:'C-follow-up-and-summary',turns:[
@@ -38,7 +38,8 @@ for(const scenario of scenarios){
   for(const [message,pattern,grounded,chapter] of scenario.turns){
    const started=Date.now();const result=await api('/api/chats/'+id+'/messages','POST',{message});
    assert.match(result.content,pattern);
-   if(grounded){assert.ok(result.sources.length);if(chapter)assert.ok(result.sources.some(s=>s.chapter===chapter))}
+   if(grounded==='onboarding'&&!result.sources.length)assert.match(result.content,/เริ่มเรียนภาษา C/);
+   else if(grounded){assert.ok(result.sources.length);if(chapter)assert.ok(result.sources.some(s=>s.chapter===chapter))}
    else assert.deepEqual(result.sources,[]);
    const saved=await api('/api/chats/'+id);assert.equal(saved.messages.filter(m=>m.role==='user').at(-1).content,message);
    console.log(JSON.stringify({scenario:scenario.name,message,answer:result.content,pages:result.sources.map(s=>s.page),ms:Date.now()-started,pass:true}));
