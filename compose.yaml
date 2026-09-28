@@ -29,11 +29,11 @@ services:
       retries: 5
       start_period: 90s
   app:
-    image: ${APP_IMAGE:-c-companion:0.3.1-rc.3}
+    image: ${APP_IMAGE:-c-companion:1.0.0}
     build:
       context: .
       args:
-        RELEASE_ID: ${RELEASE_ID:-0.3.1-rc.3}
+        RELEASE_ID: ${RELEASE_ID:-1.0.0}
         SOURCE_REVISION: ${SOURCE_REVISION:-unknown}
     depends_on:
       hermes:
@@ -68,7 +68,7 @@ services:
     depends_on:
       app:
         condition: service_healthy
-    image: ${APP_IMAGE:-c-companion:0.3.1-rc.3}
+    image: ${APP_IMAGE:-c-companion:1.0.0}
     command: ["node", "ops/backup.mjs"]
     restart: unless-stopped
     init: true
@@ -91,7 +91,7 @@ services:
     depends_on:
       app:
         condition: service_healthy
-    image: ${APP_IMAGE:-c-companion:0.3.1-rc.3}
+    image: ${APP_IMAGE:-c-companion:1.0.0}
     command: ["node", "ops/monitor.mjs"]
     restart: unless-stopped
     init: true
