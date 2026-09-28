@@ -23,11 +23,16 @@ test('learner receives a cited answer and reports a problem',async({page})=>{
  await page.getByRole('button',{name:'ส่งคำถาม'}).click();
  await expect(page.getByText('คำตอบทดสอบ: พอยน์เตอร์เก็บที่อยู่ของข้อมูล')).toBeVisible();
  await expect(page.getByRole('button',{name:/หน้า \d+/}).first()).toBeVisible();
- await page.getByRole('button',{name:'รายงานปัญหาคำตอบนี้'}).click();
- const dialog=page.getByRole('dialog',{name:'รายงานปัญหา'});
- await dialog.getByRole('textbox',{name:'รายละเอียดที่พบ'}).fill('ทดสอบการส่งรายงานจากหน้าเว็บ');
- await dialog.getByRole('button',{name:/ส่งรายงาน/}).click();
- await expect(dialog.getByText('บันทึกรายงานแล้ว')).toBeVisible();
+ const link=page.getByRole('link',{name:'รายงานปัญหาคำตอบนี้'});
+ const href=await link.getAttribute('href');
+ const mail=new URL(href);
+ expect(mail.protocol).toBe('mailto:');
+ expect(mail.pathname).toBe('s6702041610258@email.kmutnb.ac.th');
+ expect(mail.searchParams.get('subject')).toContain('รายงานปัญหาคำตอบ');
+ expect(mail.searchParams.get('body')).not.toContain('พอยน์เตอร์');
+ await expect(page.getByRole('dialog',{name:'รายงานปัญหา'})).toHaveCount(0);
+ await expect(page.getByRole('link',{name:'รายงานปัญหา',exact:true})).toHaveAttribute('href',/^mailto:s6702041610258@email\.kmutnb\.ac\.th\?/);
+
 });
 
 test('mobile learner can close and reopen sources',async({page})=>{

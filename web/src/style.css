@@ -47,19 +47,14 @@
 @keyframes source-enter{from{transform:translateX(25px);opacity:.5}to{transform:translateX(0);opacity:1}}
 @keyframes source-fade{from{opacity:0}to{opacity:1}}
 
-.report-answer{display:flex;align-items:center;gap:6px;margin-top:14px;padding:6px 0;background:none;border:0;color:#60786b;font-size:11px;min-height:36px}.report-answer:hover{color:#234b38;text-decoration:underline}.report-nav{margin-top:auto;flex-shrink:0}.report-modal{width:min(520px,94vw);max-height:90dvh;overflow-y:auto;padding:26px;border-radius:16px;background:#fff}.report-modal header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.report-modal h2{font-size:20px;display:flex;align-items:center;gap:9px;margin:0}.report-modal p{font-size:13px;line-height:1.8;color:#60786b}.report-modal label{display:block;font-size:13px;font-weight:500;margin:16px 0 7px}.report-modal select,.report-modal textarea{display:block;width:100%;padding:11px 12px;border:1px solid #cfded5;border-radius:8px;background:#fcfefd;color:#234b38;font:inherit;font-size:14px}.report-modal textarea{resize:vertical;min-height:100px}.report-modal small{display:block;font-size:11px;color:#64796d;line-height:1.8}.report-modal .report-attachment{display:flex;align-items:flex-start;gap:9px;padding:12px;background:#f1f7f3;border-radius:8px}.report-attachment input{margin-top:5px;accent-color:#3c7154}.report-attachment small{max-height:65px;overflow:auto;overflow-wrap:anywhere}.report-modal .primary-button{width:100%;justify-content:center;min-height:44px}.report-modal .report-privacy{font-size:11px}.report-modal .report-error{color:#a13d32}.report-success{text-align:center;padding:20px 0}.report-success>svg{color:#3c7154}.report-success code{display:block;overflow-wrap:anywhere;font-size:12px;background:#f1f7f3;padding:12px;border-radius:8px}.report-modal button:disabled{opacity:.55;cursor:default}@media(max-width:760px){.report-modal{padding:20px}.report-answer{min-height:44px}}
+.report-answer{display:flex;align-items:center;gap:6px;margin-top:14px;padding:6px 0;background:none;border:0;color:#60786b;font-size:11px;min-height:36px}.report-answer:hover{color:#234b38;text-decoration:underline}.report-nav{margin-top:auto;flex-shrink:0}@media(max-width:760px){.report-answer{min-height:44px}}
 
 .mode-hint{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:9px 11px;border-radius:8px;background:#edf6ef;color:#315b42;font-size:13px;line-height:1.6}.mode-hint svg{flex-shrink:0}
 .book-modal iframe{min-height:0}.book-fallback{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;border-top:1px solid var(--line);background:#f2f8f3;color:#4e6b58;font-size:12px;line-height:1.6}.book-fallback a{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:9px 14px;border-radius:8px;background:#397050;color:#fff;font-weight:600;white-space:nowrap}.book-fallback a:hover{background:#285b3f}.book-fallback a:focus-visible{outline:3px solid #174e34;outline-offset:2px}
 @media(max-width:760px){.mode-hint{font-size:12px}.book-fallback{align-items:stretch;flex-direction:column;padding:10px 14px;gap:6px}.book-fallback a{width:100%}}
 
-.reply-language{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:4px 0 8px;font-size:12px;color:var(--muted)}
-.reply-language [role=group]{display:flex;gap:4px;padding:3px;border:1px solid var(--line);border-radius:12px}
-.reply-language button{min-height:36px;min-width:62px;padding:6px 12px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;cursor:pointer}
-.reply-language button[aria-pressed=true]{background:var(--teal);color:white;font-weight:600}
-.reply-language button:focus-visible{outline:2px solid currentColor;outline-offset:3px}
-.reply-language button:disabled{opacity:.55;cursor:wait}
-.language-notice{font-size:12px;line-height:1.5;color:var(--muted)}
-.language-notice:not(:empty){margin-bottom:8px}
-:root[data-theme=dark] .reply-language button[aria-pressed=true]{background:#e7b96b;color:#13151a}
-@media(max-width:600px){.reply-language button{min-height:44px}.reply-language{gap:6px}}
+
+/* Email reporting links share the existing navigation and answer actions. */
+a.report-nav,a.report-answer{text-decoration:none}a.report-answer:hover{text-decoration:underline}a.report-nav:focus-visible,a.report-answer:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+
+.language-help{font-size:12px;line-height:1.8;color:var(--muted);margin:10px 0 18px}

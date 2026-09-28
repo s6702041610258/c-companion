@@ -42,15 +42,17 @@ test('English summary, clarification and provider error are localized',async({re
   expect((await send(request,id,'Summarize our conversation')).content).toContain('Summary of this conversation');
  }finally{await request.delete('/api/chats/'+id)}
 });
-test('mobile language picker keeps the same chat, draft and saved preference',async({page})=>{
+test('mobile changes language through chat and remembers it after reload',async({page})=>{
  await page.setViewportSize({width:390,height:844});await page.goto('/');
- const group=page.getByRole('group',{name:'ภาษาคำตอบ / Reply language'});
- await group.getByRole('button',{name:'English',exact:true}).click();
- const field=page.getByRole('textbox',{name:'คำถามภาษา C'});await field.fill('พอยน์เตอร์คืออะไร');await page.getByRole('button',{name:'ส่งคำถาม',exact:true}).click();
- await expect(page.locator('article.assistant .prose')).toContainText('Test answer');
- const sources=page.getByRole('dialog',{name:'แหล่งอ้างอิง'});await sources.getByRole('button',{name:'ย่อแผงอ้างอิง'}).click();
- await field.fill('draft remains');await group.getByRole('button',{name:'ไทย',exact:true}).click();await expect(field).toHaveValue('draft remains');await expect(page.locator('article.assistant')).toHaveCount(1);
- await page.reload();await page.getByRole('button',{name:'เปิดเมนู',exact:true}).click();await page.locator('.history-list').getByRole('button',{name:'พอยน์เตอร์คืออะไร',exact:true}).click();
- await expect(group.getByRole('button',{name:'ไทย',exact:true})).toHaveAttribute('aria-pressed','true');await expect(page.locator('article.assistant')).toHaveCount(1);
+ await expect(page.getByRole('group',{name:'ภาษาคำตอบ / Reply language'})).toHaveCount(0);
+ await expect(page.getByText('พิมพ์ “ตอบเป็นอังกฤษ” หรือ “ตอบเป็นไทย” เพื่อเปลี่ยนภาษาได้เลย')).toBeVisible();
+ const field=page.getByRole('textbox',{name:'คำถามภาษา C'});
+ await field.fill('ต่อไปตอบอังกฤษนะ');await page.getByRole('button',{name:'ส่งคำถาม',exact:true}).click();
+ await expect(page.locator('article.assistant .prose').last()).toContainText('Next replies will be in English');
+ await page.reload();await page.getByRole('button',{name:'เปิดเมนู',exact:true}).click();await page.locator('.history-list').getByRole('button',{name:'ต่อไปตอบอังกฤษนะ',exact:true}).click();
+ await expect(field).toHaveAttribute('placeholder','Ask about C programming…');
+ await field.fill('ตอบไทยเหมือนเดิม');await page.getByRole('button',{name:'ส่งคำถาม',exact:true}).click();
+ await expect(page.locator('article.assistant .prose').last()).toContainText('ภาษาไทย');
+ await expect(page.locator('article.assistant')).toHaveCount(2);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

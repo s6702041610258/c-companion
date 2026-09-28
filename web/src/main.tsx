@@ -1,10 +1,10 @@
-import {ReplyLanguagePicker,preferredReplyLanguage,rememberReplyLanguage,type ReplyLanguage} from './ReplyLanguage';
-import {ReportDialog,type ReportTarget} from './ReportDialog';
+import {preferredReplyLanguage,rememberReplyLanguage,type ReplyLanguage} from './ReplyLanguage';
+import {ReportLink} from './ReportLink';
 import {useSources,SourcesButton,SourcesPanel} from './SourcesPanel';
 import React,{useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import Markdown from 'react-markdown';
-import {Flag,ArrowUp,ArrowUpRight,BookOpen,Check,ChevronRight,Code2,Compass,Copy,GraduationCap,History,LoaderCircle,Menu,MessageCircle,Plus,Search,Sparkles,Target,Trash2,X,PanelRightClose,ExternalLink,AlertCircle,RotateCcw,Sun,Moon} from 'lucide-react';
+import {ArrowUp,ArrowUpRight,BookOpen,Check,ChevronRight,Code2,Compass,Copy,GraduationCap,History,LoaderCircle,Menu,MessageCircle,Plus,Search,Sparkles,Target,Trash2,X,PanelRightClose,ExternalLink,AlertCircle,RotateCcw,Sun,Moon} from 'lucide-react';
 import '@fontsource/noto-sans-thai/400.css';
 import '@fontsource/noto-sans-thai/500.css';
 import '@fontsource/noto-sans-thai/600.css';
@@ -33,9 +33,8 @@ function App(){
  const [booting,setBooting]=useState(true),[configured,setConfigured]=useState(false),[sidebar,setSidebar]=useState(false),[library,setLibrary]=useState(false),[search,setSearch]=useState('');
  const [bookPage,setBookPage]=useState<number|null>(null),[deleting,setDeleting]=useState<Chat|null>(null);
  const end=useRef<HTMLDivElement>(null),input=useRef<HTMLTextAreaElement>(null),controller=useRef<AbortController|null>(null),sending=useRef(false);
- const [report,setReport]=useState<ReportTarget|null>(null);
- const [replyLanguage,setReplyLanguage]=useState<ReplyLanguage>(preferredReplyLanguage),[savingLanguage,setSavingLanguage]=useState(false),[languageNotice,setLanguageNotice]=useState('');
- const busy=answerBusy||savingLanguage;
+ const [replyLanguage,setReplyLanguage]=useState<ReplyLanguage>(preferredReplyLanguage);
+ const busy=answerBusy;
  const [queueStage,setQueueStage]=useState('');
  const pendingJob=useRef<string|null>(null);
  const references=useSources(messages,chatId);
@@ -45,7 +44,7 @@ function App(){
  async function refresh(){const b=await api('bootstrap');setChapters(b.chapters);setChats(b.chats);setProgress(b.progress);setConfigured(b.configured)}
  useEffect(()=>{refresh().catch(e=>setError(e.message)).finally(()=>setBooting(false));return ()=>controller.current?.abort()},[]);
  useEffect(()=>{end.current?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})},[messages,busy]);
- useEffect(()=>{function escape(e:KeyboardEvent){if(e.key==='Escape'){if(report)setReport(null);else if(bookPage!==null)setBookPage(null);else if(library)setLibrary(false);else if(deleting)setDeleting(null);else if(sidebar)setSidebar(false);else if(references.open)references.close()}}document.addEventListener('keydown',escape);return()=>document.removeEventListener('keydown',escape)},[report,bookPage,library,deleting,sidebar,references.open,references.close]);
+ useEffect(()=>{function escape(e:KeyboardEvent){if(e.key==='Escape'){if(bookPage!==null)setBookPage(null);else if(library)setLibrary(false);else if(deleting)setDeleting(null);else if(sidebar)setSidebar(false);else if(references.open)references.close()}}document.addEventListener('keydown',escape);return()=>document.removeEventListener('keydown',escape)},[bookPage,library,deleting,sidebar,references.open,references.close]);
  useEffect(()=>{
   const dialog=document.querySelector<HTMLElement>('.modal-overlay:last-of-type .modal');
   if(!dialog)return;
@@ -56,23 +55,15 @@ function App(){
   const trap=(e:KeyboardEvent)=>{if(e.key!=='Tab')return;const elements=focusables();const first=elements[0],last=elements.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}};
   document.addEventListener('keydown',trap);
   return()=>{clearTimeout(timer);background.forEach(e=>e.inert=false);document.removeEventListener('keydown',trap);previous?.focus()};
- },[library,bookPage,deleting,report]);
- function reset(ch=chapter,nextMode=mode){if(busy)return;setChapter(ch);setMode(nextMode);setChatId(null);setMessages([]);setReplyLanguage(preferredReplyLanguage());setLanguageNotice('');setDraft('');setError('');setSidebar(false);setLibrary(false);setTimeout(()=>{if(!document.querySelector('.source-panel[role=dialog]:not([hidden])')&&!document.querySelector('.modal-overlay'))input.current?.focus()},50)}
- async function openChat(chat:Chat){if(busy)return;setError('');setBusy(true);try{const c=await api('chats/'+chat.id);setChatId(c.id);setChapter(c.chapter);setMode(c.mode);setReplyLanguage(c.replyLanguage||'th');setLanguageNotice('');setMessages(c.messages);setSidebar(false)}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
- async function changeLanguage(language:ReplyLanguage){
-  if(busy||language===replyLanguage)return;
-  setSavingLanguage(true);setError('');
-  try{
-   if(chatId){const saved=await api('chats/'+chatId,{method:'PATCH',body:JSON.stringify({replyLanguage:language})});language=saved.replyLanguage}
-   setReplyLanguage(language);rememberReplyLanguage(language);setLanguageNotice(language==='en'?'Next replies will be in English.':'คำตอบถัดไปจะเป็นภาษาไทย');
-  }catch(e){setError((e as Error).message)}finally{setSavingLanguage(false)}
- }
+ },[library,bookPage,deleting]);
+ function reset(ch=chapter,nextMode=mode){if(busy)return;setChapter(ch);setMode(nextMode);setChatId(null);setMessages([]);setReplyLanguage(preferredReplyLanguage());setDraft('');setError('');setSidebar(false);setLibrary(false);setTimeout(()=>{if(!document.querySelector('.source-panel[role=dialog]:not([hidden])')&&!document.querySelector('.modal-overlay'))input.current?.focus()},50)}
+ async function openChat(chat:Chat){if(busy)return;setError('');setBusy(true);try{const c=await api('chats/'+chat.id);setChatId(c.id);setChapter(c.chapter);setMode(c.mode);setReplyLanguage(c.replyLanguage||'th');setMessages(c.messages);setSidebar(false)}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
  async function send(value=draft){
   const text=value.trim();if(!text||sending.current||busy)return;
   controller.current=new AbortController();
   const signal=controller.current.signal;
   let createdChat=false,submitted=false;
-  sending.current=true;setBusy(true);setError('');setLanguageNotice('');setDraft('');
+  sending.current=true;setBusy(true);setError('');setDraft('');
   let id=chatId;const previous=messages;
   setMessages([...previous,{role:'user',content:text,sources:[]}]);
   try{
@@ -94,7 +85,7 @@ function App(){
    const answer=job.result;
    if(answer.preferredLanguage==='th'||answer.preferredLanguage==='en'){
     setReplyLanguage(answer.preferredLanguage);
-    if(answer.preferredLanguage!==replyLanguage){rememberReplyLanguage(answer.preferredLanguage);setLanguageNotice(answer.preferredLanguage==='en'?'Next replies will be in English.':'คำตอบถัดไปจะเป็นภาษาไทย')}
+    if(answer.preferredLanguage!==replyLanguage){rememberReplyLanguage(answer.preferredLanguage)}
    }
    pendingJob.current=null;
    setMessages([...previous,{role:'user',content:text,sources:[]},answer]);
@@ -116,7 +107,7 @@ function App(){
    <div className="history-heading"><span><History size={15}/> บทสนทนาล่าสุด</span><span>{chats.length}</span></div>
    <div className="history-list">{chats.length===0?<p className="history-empty">คำถามแรกของคุณ<br/>จะเริ่มเรื่องราวตรงนี้</p>:chats.slice(0,15).map(c=><div key={c.id} className={'history-row '+(c.id===chatId?'selected':'')}><button disabled={busy} onClick={()=>openChat(c)} title={c.title}>{c.title}</button><button className="delete-chat" aria-label={'ลบ '+c.title} disabled={busy} onClick={()=>setDeleting(c)}><Trash2 size={14}/></button></div>)}</div>
    <div className="sidebar-book"><div className="little-book"><span>C</span><i>COMPANION</i></div><div><strong>เรียนจากหนังสือเล่มเดียวกัน</strong><p>12 บท · 113 หน้า PDF</p><button onClick={()=>setBookPage(1)}>เปิดหนังสือ <ArrowUpRight size={14}/></button></div></div>
-   <button className="nav-item report-nav" onClick={()=>{setSidebar(false);setReport({})}}><Flag size={17}/>รายงานปัญหา</button><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.4.0</span></div>
+   <ReportLink className="nav-item report-nav" onClick={()=>setSidebar(false)}/><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.4.1</span></div>
   </aside>
   <main className="main">
    <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" aria-label="เปิดเมนู" onClick={()=>setSidebar(true)}><Menu size={20}/></button><span className="desktop-icon"><Compass size={19}/></span><span>ห้องติว</span><ChevronRight size={14}/><button onClick={()=>setLibrary(true)}>{label}</button></div><div className="topbar-actions"><SourcesButton panel={references}/><button className="book-button" onClick={()=>setBookPage(selected?selected.start+5:1)}><BookOpen size={16}/><span>เปิดหนังสือ</span></button><button className="theme-toggle" type="button" aria-label={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} title={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} onClick={toggleTheme}>{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}<span>{theme==='dark'?'โหมดสว่าง':'โหมดมืด'}</span></button></div></header>
@@ -127,6 +118,7 @@ function App(){
        <div className="welcome-eyebrow"><span className="status-dot"/>{configured?'พร้อมเรียนรู้ไปด้วยกัน':'อ่านหนังสือได้ · รอเชื่อมต่อ AI'}</div>
        <h1>ภาษา C เข้าใจได้<br/><span>ทีละคำถาม ทีละก้าว</span></h1>
        <p className="welcome-description">ไม่ต้องเข้าใจทุกอย่างในครั้งแรก<br className="mobile-break"/> ลองถามสิ่งที่สงสัย<br className="desktop-break"/> แล้วเราจะค่อย ๆ หาคำตอบจากหนังสือไปด้วยกัน</p>
+       <p className="language-help">พิมพ์ “ตอบเป็นอังกฤษ” หรือ “ตอบเป็นไทย” เพื่อเปลี่ยนภาษาได้เลย</p>
        <div className="feature-study">
         <div className="study-copy"><span className="study-tag"><BookOpen size={15}/> หนังสือของห้องเรียนนี้</span><h2>{selected?selected.title:'จากบรรทัดแรก สู่ความเข้าใจ'}</h2><p>{selected?selected.subtitle:'ตัวแปร เงื่อนไข ลูป และอีกหลายเรื่องที่คุณทำได้'}</p><button onClick={()=>selected?send('ช่วยเริ่มติวบทที่ '+chapter+' แบบง่าย ๆ'):setLibrary(true)} disabled={busy}>{selected?'เริ่มเรียนบทนี้':'เลือกบทที่อยากเรียน'} <ArrowUpRight size={17}/></button></div>
         <div className="code-illustration" aria-label="ตัวอย่างโปรแกรม Hello World"><div className="editor-heading"><span/><span/><span/><small>hello.c</small></div><div className="sample-code"><div><i>1</i><b>#include</b> <em>&lt;stdio.h&gt;</em></div><div><i>2</i></div><div><i>3</i><b>int</b> main(<b>void</b>) {'{'}</div><div><i>4</i>　printf(<em>"Hello, learner!\n"</em>);</div><div><i>5</i>　<b>return</b> <strong>0</strong>;</div><div><i>6</i>{'}'}</div></div><div className="code-output"><span><Check size={13}/> ก้าวแรกของคุณ</span><code>Hello, learner!</code></div></div>
@@ -134,13 +126,11 @@ function App(){
        <div className="suggestion-heading"><Sparkles size={16}/><span>เริ่มจากคำถามเล็ก ๆ ก็ได้</span></div>
        <div className="suggestions">{suggestions.map((q,i)=><button key={q} disabled={busy||!configured} onClick={()=>send(q)}><span className="suggestion-icon">{i===0?<Code2 size={19}/>:i===1?<RotateCcw size={18}/>:<Search size={18}/>}</span><span>{q}</span><ArrowUpRight size={15}/></button>)}</div>
        <div className="trust-note"><BookOpen size={14}/> ค้นจากหนังสือก่อนตอบ พร้อมแหล่งอ้างอิงให้เปิดอ่าน</div>
-      </div>:<div className="messages"><div className="conversation-context"><span><BookOpen size={14}/>{label}</span><span>{modes.find(m=>m.id===mode)?.title}</span><button disabled={busy} onClick={()=>reset()}>เริ่มใหม่ <Plus size={14}/></button></div>{messages.map((m,i)=><article key={i} className={'message '+m.role}><div className={'message-avatar '+m.role}>{m.role==='assistant'?<Code2 size={18}/>:<span>คุณ</span>}</div><div className="message-body"><div className="message-author">{m.role==='assistant'?'C Companion':'คุณ'}</div><div className="prose" lang={m.role==='assistant'?m.replyLanguage:undefined}><Markdown components={{pre:CodeBlock}}>{m.content}</Markdown></div>{m.sources?.length>0&&<div className="citation-list"><span>อ่านต่อในหนังสือ</span>{m.sources.map(s=><button key={s.page} onClick={()=>references.openSource(i,s.page)}><BookOpen size={13}/> หน้า {s.page}<ArrowUpRight size={12}/></button>)}</div>}{m.role==='assistant'&&m.id&&<button className="report-answer" onClick={()=>setReport({chatId:chatId||undefined,messageId:m.id,question:messages[i-1]?.content})}><Flag size={13}/>รายงานปัญหาคำตอบนี้</button>}</div></article>)}{busy&&<div className="thinking" role="status"><span className="message-avatar assistant"><Code2 size={18}/></span><div><span className="thinking-dots"><i/><i/><i/></span><p>{queueStage||(replyLanguage==='en'?'Sending your question…':'กำลังส่งคำถาม…')}</p></div></div>}<div ref={end}/></div>}
+      </div>:<div className="messages"><div className="conversation-context"><span><BookOpen size={14}/>{label}</span><span>{modes.find(m=>m.id===mode)?.title}</span><button disabled={busy} onClick={()=>reset()}>เริ่มใหม่ <Plus size={14}/></button></div>{messages.map((m,i)=><article key={i} className={'message '+m.role}><div className={'message-avatar '+m.role}>{m.role==='assistant'?<Code2 size={18}/>:<span>คุณ</span>}</div><div className="message-body"><div className="message-author">{m.role==='assistant'?'C Companion':'คุณ'}</div><div className="prose" lang={m.role==='assistant'?m.replyLanguage:undefined}><Markdown components={{pre:CodeBlock}}>{m.content}</Markdown></div>{m.sources?.length>0&&<div className="citation-list"><span>อ่านต่อในหนังสือ</span>{m.sources.map(s=><button key={s.page} onClick={()=>references.openSource(i,s.page)}><BookOpen size={13}/> หน้า {s.page}<ArrowUpRight size={12}/></button>)}</div>}{m.role==='assistant'&&m.id&&<ReportLink answer className="report-answer"/>}</div></article>)}{busy&&<div className="thinking" role="status"><span className="message-avatar assistant"><Code2 size={18}/></span><div><span className="thinking-dots"><i/><i/><i/></span><p>{queueStage||(replyLanguage==='en'?'Sending your question…':'กำลังส่งคำถาม…')}</p></div></div>}<div ref={end}/></div>}
      </div>
      <div className="composer-area">
       {error&&<div className="error-message" role="alert"><AlertCircle size={17}/><span>{error}</span><button aria-label="ปิดข้อความแจ้งเตือน" onClick={()=>setError('')}><X size={16}/></button></div>}
       <div className="mode-toolbar"><div className="mode-tabs" role="group" aria-label="รูปแบบการเรียน">{modes.map(m=><button key={m.id} aria-pressed={mode===m.id} disabled={busy} className={mode===m.id?'active':''} onClick={()=>{if(chatId)reset(chapter,m.id);else setMode(m.id)}}><m.icon size={16}/>{m.title}</button>)}</div><button className="chapter-selector" disabled={busy} onClick={()=>setLibrary(true)}><BookOpen size={14}/><span>{chapter?'บทที่ '+chapter:'ทุกบท'}</span><ChevronRight size={13}/></button></div>
-      <ReplyLanguagePicker value={replyLanguage} disabled={busy} onChange={changeLanguage}/>
-      <div className="language-notice" role="status" aria-live="polite">{savingLanguage?(replyLanguage==='en'?'Saving language…':'กำลังบันทึกภาษา…'):languageNotice}</div>
       {mode==='quiz'&&<p className="mode-hint"><Target size={15}/>{replyLanguage==='en'?'Try the exercise first. Then I can review your answer and explain the solution.':'ลองตอบโจทย์ก่อน แล้วระบบจะตรวจคำตอบและอธิบายเฉลยหลังคุณส่งคำตอบ'}</p>}
       <form className={'composer '+(busy?'is-busy':'')} onSubmit={e=>{e.preventDefault();send()}}><label className="sr-only" htmlFor="question">คำถามภาษา C</label><textarea ref={input} id="question" rows={2} maxLength={3000} value={draft} disabled={busy||!configured} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}} placeholder={replyLanguage==='en'?(mode==='quiz'?'Choose a topic, e.g. give me a loop exercise':mode==='tutor'?'What would you like to learn step by step?':'Ask about C programming…'):mode==='quiz'?'อยากฝึกเรื่องไหน? เช่น ขอแบบฝึกหัดเรื่องลูป':mode==='tutor'?'เรื่องไหนที่ยังไม่เข้าใจ? เราจะค่อย ๆ เรียนไปด้วยกัน':'ถามเรื่องภาษา C ได้เลย เช่น ทำไมลูปนี้ถึงไม่หยุด...'}/><div className="composer-bottom"><span><span className="mini-spark">✦</span> {draft.length>2700?draft.length+'/3,000':(replyLanguage==='en'?'English replies · Book references':'อธิบายเป็นภาษาไทย · อ้างอิงจากหนังสือ')}</span>{answerBusy?<button type="button" className="stop-button" aria-label="หยุดรอคำตอบ" onClick={()=>controller.current?.abort()}><span/></button>:<button className="send-button" type="submit" disabled={busy||!draft.trim()||!configured} aria-label="ส่งคำถาม"><ArrowUp size={21}/></button>}</div></form>
       <p className="composer-note">AI อาจตอบคลาดเคลื่อน ตรวจสอบกับหนังสือก่อนนำไปใช้ <span>Enter เพื่อส่ง · Shift + Enter ขึ้นบรรทัดใหม่</span></p>
@@ -152,7 +142,7 @@ function App(){
   {library&&<div className="modal-overlay" onClick={()=>setLibrary(false)}><section className="library modal" role="dialog" aria-modal="true" aria-labelledby="library-title" onClick={e=>e.stopPropagation()}><header><div><span className="modal-kicker">เลือกจุดเริ่มต้นของคุณ</span><h2 id="library-title">วันนี้อยากเรียนเรื่องอะไร?</h2></div><button className="icon-button" autoFocus aria-label="ปิดบทเรียน" onClick={()=>setLibrary(false)}><X/></button></header><p>เรียนตามลำดับ หรือเลือกเรื่องที่สงสัยได้เลย · เปิดเรียนแล้ว {progress.length} / 12 บท</p><label className="library-search"><Search size={18}/><input aria-label="ค้นหาบทเรียน" placeholder="ค้นหาบทเรียน เช่น ลูป พอยน์เตอร์" value={search} onChange={e=>setSearch(e.target.value)}/></label><div className="chapter-grid">{chapters.filter(c=>(c.title+c.subtitle+c.id).toLowerCase().includes(search.toLowerCase())).map(c=><button className={'chapter-card '+(c.id===chapter?'selected':'')} key={c.id} disabled={busy} onClick={()=>reset(c.id)}><span className="chapter-number">{String(c.id).padStart(2,'0')}</span><div><h3>{c.title}</h3><p>{c.subtitle}</p><small>หน้า {c.start}–{c.end}{progress.includes(c.id)&&' · เคยเปิดเรียน'}</small></div><ChevronRight size={18}/></button>)}</div><button className="all-chapters" disabled={busy} onClick={()=>reset(0)}>ถามได้จากทุกบทเรียน <ArrowUpRight size={16}/></button></section></div>}
   {bookPage!==null&&<div className="modal-overlay"><section className="book-modal modal" role="dialog" aria-modal="true" aria-label="หนังสือ C Companion"><header><div><BookOpen size={19}/><strong>C Companion</strong><span>PDF หน้า {bookPage}</span></div><div><a className="icon-button" href={base+'book.pdf#page='+bookPage} target="_blank" rel="noreferrer" aria-label="เปิด PDF ในแท็บใหม่"><ExternalLink size={18}/></a><button className="icon-button" autoFocus aria-label="ปิดหนังสือ" onClick={()=>setBookPage(null)}><X size={20}/></button></div></header><iframe title="หนังสือภาษา C" src={base+'book.pdf#page='+bookPage}/><div className="book-fallback"><span>หาก PDF แสดงไม่ครบหรือเป็นพื้นที่สีดำ</span><a href={base+'book.pdf#page='+bookPage} target="_blank" rel="noreferrer">เปิด PDF ในแท็บใหม่ <ExternalLink size={15}/></a></div></section></div>}
   {deleting&&<div className="modal-overlay"><section className="confirm modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-title"><h2 id="delete-title">ลบบทสนทนานี้?</h2><p>“{deleting.title}” จะถูกลบออกจากประวัติ</p><div><button autoFocus onClick={()=>setDeleting(null)}>เก็บไว้</button><button className="danger" onClick={async()=>{try{await api('chats/'+deleting.id,{method:'DELETE'});if(chatId===deleting.id)reset();setDeleting(null);await refresh()}catch(e){setError((e as Error).message);setDeleting(null)}}}>ลบบทสนทนา</button></div></section></div>}
-  {report&&<ReportDialog target={report} onClose={()=>setReport(null)} onSubmit={data=>api('reports',{method:'POST',body:JSON.stringify(data)})}/>}
+
  </div>
 }
 createRoot(document.getElementById('root')!).render(<App/>);

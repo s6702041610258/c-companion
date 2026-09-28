@@ -1,8 +1,13 @@
 # C Companion
 
-## รุ่น 1.4.0 — ภาษาคำตอบไทย / English
+## รุ่น 1.4.1 — ลดปุ่มในแชทและรายงานทางอีเมล
 
-- เลือกภาษาคำตอบเหนือช่องพิมพ์ เปลี่ยนในแชทเดิมได้โดยเก็บประวัติ ข้อความร่าง และสถานะโจทย์
+- ลบปุ่มเลือกภาษา ใช้คำสั่งในแชท พร้อมคำแนะนำในหน้าต้อนรับ
+- รายงานปัญหาเปิดร่างอีเมลถึง s6702041610258@email.kmutnb.ac.th ผู้ใช้กดส่งเอง ไม่แนบแชทอัตโนมัติ
+
+## ภาษาคำตอบไทย / English
+
+- เปลี่ยนภาษาด้วยคำสั่งในแชท เช่น “ตอบเป็นอังกฤษ” หรือ “ตอบเป็นไทย” โดยเก็บประวัติและสถานะโจทย์
 - จำค่าต่อแชทบนเซิร์ฟเวอร์ และค่าที่เลือกล่าสุดในเบราว์เซอร์สำหรับแชทใหม่ เมนูเว็บยังใช้ชื่อไทยเดิม
 - พิมพ์ขอเปลี่ยนภาษาต่อเนื่องหรือเฉพาะครั้งได้ ครอบคลุมทุกโหมด สรุป คู่มือ คุยเล่นและข้อความสำรอง ไม่เพิ่มรอบ AI เพื่อแปลทุกคำตอบ
 - เพิ่มตาราง chat_preferences และ job_languages แบบแยก ไม่เปลี่ยนคอลัมน์ตารางเดิม แชทเก่าใช้ไทย; ตรวจเจ้าของ ปฏิเสธเปลี่ยนค่าระหว่างงานค้าง และบันทึกการเปลี่ยนผ่านข้อความพร้อมคำตอบ
@@ -95,8 +100,9 @@ Each new answer with sources automatically opens the panel at its first cited pa
 
 ## Topic spelling and problem reports
 Retrieval recognizes common Thai and English topic spelling variants in app/query-normalization.mjs (including pointer, function, array, loop and variable aliases). Thai tone marks are folded only for matching known topic aliases. Original questions and code remain unchanged. This does not guarantee correction of arbitrary misspellings.
-Users can report an individual answer or a general website problem. Reports are stored in SQLite in the same persistent Docker data volume. Optional attachments contain only the selected answer, its preceding question and citations, checked against the current browser session on the server. They are snapshots retained separately when the original chat is deleted. Reports are not sent to Hermes or an external notification service. There is no automatic reply to the reporter.
-Authenticated VPS operators inspect reports with these commands (add the deployment-specific Compose override when applicable):
+Use “รายงานปัญหา” or “รายงานปัญหาคำตอบนี้” to open an email draft addressed to **s6702041610258@email.kmutnb.ac.th** in the device’s configured email app. Add details or screenshots and send it yourself. Chat contents are not attached automatically. If no email app is configured, copy this address into your preferred email service.
+
+Existing reports from earlier versions remain in SQLite. Authenticated VPS operators inspect reports with these commands (add the deployment-specific Compose override when applicable):
 - `docker compose exec app node app/reports-cli.mjs list`
 - `docker compose exec app node app/reports-cli.mjs show <report-id>`
 - `docker compose exec app node app/reports-cli.mjs resolve <report-id>`
