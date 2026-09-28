@@ -14,6 +14,7 @@ function pageAnchors(query,needles){
  if(needles.length)for(const match of query.matchAll(/หน้า\s*(\d{1,3})/g))add(Number(match[1]));
  if(/\b(?:int|short|long|char|float|double)\s+[a-z_]\w*\s*\[\s*\d+\s*\]|(?:อาร์เรย์|อาเรย์|array)[^\n]*\[[^\]]+\]/i.test(query))add(51);
  if(/(?:sizeof\s*\(|ขนาด|ไบต์|\bbytes?\b)/i.test(query)&&/\b(?:int|short|long|char|float|double)\b/i.test(query))add(15);
+ if(/\bint\b/i.test(query)&&/\bfloat\b/i.test(query)&&/(?:ต่าง|เปรียบเทียบ|compare|difference)/i.test(query))add(15);
  return hints;
 }
 export function retrieve(pages, query, chapter=0, history=''){

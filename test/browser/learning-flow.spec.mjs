@@ -35,4 +35,25 @@ test('learner can cancel a delayed answer',async({page})=>{
  await page.getByRole('button',{name:'หยุดรอคำตอบ'}).click();
  await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toHaveValue('พอยน์เตอร์ รอทดสอบ');
  await expect(page.getByRole('alert')).toContainText('หยุดรอคำตอบแล้ว');
+ await page.reload();
+ await expect(page.locator('.history-list').getByRole('button',{name:'บทสนทนาใหม่',exact:true})).toHaveCount(0);
+});
+
+test('quiz mode explains when the learner will see the solution',async({page})=>{
+ await page.goto('/');
+ await page.getByRole('button',{name:'ฝึกทำโจทย์'}).click();
+ await expect(page.getByText('ลองตอบโจทย์ก่อน แล้วระบบจะตรวจคำตอบและอธิบายเฉลยหลังคุณส่งคำตอบ')).toBeVisible();
+});
+
+test('book dialog offers a visible PDF fallback',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/');
+ await page.locator('.topbar-actions .book-button').click();
+ const dialog=page.getByRole('dialog',{name:'หนังสือ C Companion'});
+ const fallback=dialog.locator('.book-fallback').getByRole('link',{name:/เปิด PDF ในแท็บใหม่/});
+ await expect(fallback).toBeVisible();
+ await expect(fallback).toHaveAttribute('href',/book\.pdf#page=1$/);
+ const response=await page.request.get('/book.pdf',{headers:{Range:'bytes=0-3'}});
+ expect(response.status()).toBe(206);
+ expect((await response.body()).toString()).toBe('%PDF');
 });

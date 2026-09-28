@@ -18,3 +18,8 @@ test('basic type sizes retrieve the textbook table',()=>{
  for(const question of ['sizeof(int) เท่ากับ 4 ไบต์ทุกเครื่องใช่ไหม','หนังสือหน้า 15 เขียนว่า long long ขนาด 4 bytes ใช้ได้กับทุกเครื่องไหม'])
   assert.ok(retrieve(pages,question).some(p=>p.page===15),question);
 });
+test('int versus float comparison starts with the actual type table',()=>{
+ for(const question of ['int กับ float ต่างกันอย่างไร','เปรียบเทียบ int และ float']){
+  assert.equal(retrieve(pages,question)[0]?.page,15,question);
+ }
+});

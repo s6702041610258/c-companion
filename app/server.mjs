@@ -115,7 +115,7 @@ const server=http.createServer(async(req,res)=>{
  if(path==='/api/health'){db.prepare('SELECT 1').get();return json(res,200,{ok:true,release:process.env.RELEASE_ID||'development',bookPages:pages.length,configured:!!(base&&key),queue:{active:jobs.queue.active,waiting:jobs.queue.waiting.length},recentFailures:db.prepare("SELECT count(*) n FROM jobs WHERE status='failed' AND updated>?").get(new Date(Date.now()-600000).toISOString()).n})}
  const user=owner(req,res);
  if(path==='/api/bootstrap'&&req.method==='GET'){
-  return json(res,200,{chapters,configured:!!(base&&key),progress:db.prepare('SELECT chapter FROM progress WHERE owner=?').all(user).map(p=>p.chapter),chats:db.prepare('SELECT id,title,chapter,mode,created FROM chats WHERE owner=? ORDER BY created DESC LIMIT 50').all(user)});
+  return json(res,200,{chapters,configured:!!(base&&key),progress:db.prepare('SELECT chapter FROM progress WHERE owner=?').all(user).map(p=>p.chapter),chats:db.prepare('SELECT c.id,c.title,c.chapter,c.mode,c.created FROM chats c WHERE c.owner=? AND EXISTS (SELECT 1 FROM messages m WHERE m.chat=c.id) ORDER BY c.created DESC LIMIT 50').all(user)});
  }
  if(path==='/api/chats'&&req.method==='POST'){
   const b=await body(req);const chapter=Number(b.chapter||0);const mode=b.mode||'ask';
