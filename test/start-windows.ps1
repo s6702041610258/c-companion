@@ -52,3 +52,4 @@ try {
     Remove-Item Env:TEST_DOCKER_LOG -ErrorAction SilentlyContinue
     Remove-Item $testDirectory -Recurse -Force
 }
+exit 0
