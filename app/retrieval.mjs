@@ -1,6 +1,7 @@
 import {normalizeQuery} from './query-normalization.mjs';
 import {chapters} from './curriculum.mjs';
 const dictionary=[
+['โฟลว์ชาร์ต','flowchart'],['โฟลชาร์ต','flowchart'],
 ['โครงสร้างโปรแกรม','program main compilation'],['โครงสร้างของโปรแกรม','program main compilation'],['ไฟล์ต้นฉบับ','source compilation linking'],['คอมไพเลอร์','compiler compilation'],['แปลภาษา','compiler compilation'],['ลิงก์','linking linker'],
 ['ตัวแปร','variable identifier assignment'],['ชนิดข้อมูล','type int float double char'],['จำนวนเต็ม','int integer'],['ทศนิยม','float double precision'],
 ['แสดงผล','printf output'],['พิมพ์','printf output'],['รับค่า','scanf input'],['รับข้อมูล','scanf input'],['ลูป','loop for while iteration'],['วนซ้ำ','loop for while iteration'],['ทำซ้ำ','loop for while iteration'],
@@ -8,7 +9,7 @@ const dictionary=[
 ['สตริง','string char'],['ข้อความ','string'],['ฟังก์ชัน','function parameter return'],['ฟังชัน','function'],['ไฟล์','file stream fopen'],['โครงสร้าง','struct structure'],['ผังงาน','flowchart'],['คอมไพล','compiler compilation'],['หน่วยความจำ','memory address pointer'],['ตัวดำเนินการ','operator'],['โปรเจกต์','project header'],['ค่าคงที่','constant macro'],['ภาษา','language'],['พารามิเตอร์','parameter argument'],['คืนค่า','return function'],['ตำแหน่ง','address index'],['บวก','addition operator'],['ลบ','subtraction operator'],['หาร','division operator'],['คูณ','multiplication operator']
 ];
 export function terms(query){
- let s=normalizeQuery(query).toLowerCase();
+ let s=normalizeQuery(query).toLowerCase().replace(/\bflow[\s-]*charts?\b/g,'flowchart');
  const matched=dictionary.filter(([th])=>s.includes(th)&&!(th==='โครงสร้าง'&&/โครงสร้าง(?:ของ)?โปรแกรม/.test(s)&&!/\bstruct\b/i.test(s)));
  for(const [th,en] of matched)if(th!=='ภาษา'||matched.length===1)s+=' '+en;
  return [...new Set(s.match(/[a-z_][a-z_0-9]*/g)||[])].filter(x=>!['the','what','how','is','a','an','c','me','please','explain','data','types','datatype','datatypes'].includes(x));
@@ -17,6 +18,8 @@ function pageAnchors(query,needles){
  const hints=[];
  const add=page=>{if(!hints.includes(page))hints.push(page)};
  if(needles.length)for(const match of query.matchAll(/หน้า\s*(\d{1,3})/g))add(Number(match[1]));
+ // The definition and Table 1-1 span three pages; the continuation has few topic keywords.
+ if(needles.includes('flowchart')){add(5);add(6);add(7)}
  if(/\b(?:int|short|long|char|float|double)\s+[a-z_]\w*\s*\[\s*\d+\s*\]|(?:อาร์เรย์|อาเรย์|array)[^\n]*\[[^\]]+\]/i.test(query))add(51);
  if(/\b(?:argc|argv)\b/i.test(query)){add(85);add(86)}
  // A named for loop is more specific than generic loop/printf vocabulary.
@@ -32,9 +35,22 @@ export function retrieve(pages, query, chapter=0, history=''){
  return pages.filter(p=>p.page<=107&&(!chapter||p.chapter===chapter)).map(p=>{
  const content=p.text.toLowerCase();let score=0;for(const t of needles){const re=new RegExp('\\b'+t+'\\b','g');score+=Math.min((content.match(re)||[]).length,8)*(t.length>3?1.4:1);}
  const anchor=anchors.indexOf(p.page);if(anchor>=0)score+=80-anchor;
- if(chapter)score+=0.5;
+ // A selected chapter is a filter, not evidence that a page matches the question.
+ if(chapter&&!needles.length)score+=0.5;
  return {...p,score};
- }).filter(p=>p.score>0).sort((a,b)=>b.score-a.score).slice(0,4);
+ }).filter(p=>p.score>0).sort((a,b)=>{
+  const ai=anchors.indexOf(a.page),bi=anchors.indexOf(b.page);
+  if(ai>=0||bi>=0)return ai<0?1:bi<0?-1:ai-bi;
+  return b.score-a.score;
+ }).slice(0,4);
+}
+export function evidenceChapter(pages,query,chapter=0){
+ if(!chapter)return 0;
+ // Explicit textbook anchors may reveal the requested topic is in another chapter.
+ // Keep retrieve() strictly chapter-scoped; the answer layer must disclose this expansion.
+ const anchors=pageAnchors(query,terms(query));
+ const first=anchors.map(page=>pages.find(p=>p.page===page)).find(Boolean);
+ return first&&first.chapter!==chapter?0:chapter;
 }
 export function contexts(pages){return pages.map(p=>'[หน้า '+p.page+' | บท '+p.chapter+']\n'+p.text.slice(0,5500)).join('\n\n');}
 export function validateAnswer(raw, allowed){
