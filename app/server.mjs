@@ -12,6 +12,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {needsTaskPlan,parsePlan,taskContexts,plannerPrompt} from './task-planner.mjs';
 import {chapters} from './curriculum.mjs';
 import {retrieve,terms} from './retrieval.mjs';
+import {findBookLocation,locationReply} from './book-location.mjs';
 import {modes,createSystemPrompt} from './tutor-policy.mjs';
 import {retryValidatedAnswer} from './answer-validation.mjs';
 import {recordModelUsage} from './model-usage.mjs';
@@ -103,7 +104,8 @@ async function processMessage(chat,text,signal){
   if(!quizState){const old=db.prepare("SELECT id FROM messages WHERE chat=? AND role='assistant' AND sources!='[]' ORDER BY id DESC LIMIT 1").get(chat.id);if(old)quizState={exercise:old.id,attempt:null}}
   if(quizState)quizContext=db.prepare('SELECT id,role,content,sources FROM messages WHERE chat=? AND id IN (?,?) ORDER BY id').all(chat.id,quizState.exercise,quizState.attempt||-1);
  }
- const route=await routeConversation({text,history,mode:chat.mode,chapter:chat.chapter,replyLanguage:chat.replyLanguage,quizContext,signal,complete:base&&key?async(payload,routeSignal)=>{
+ const location=chat.mode==='quiz'?null:findBookLocation(pages,text,{chapter:chat.chapter});
+ const route=location?{kind:'book_location',query:''}:await routeConversation({text,history,mode:chat.mode,chapter:chat.chapter,replyLanguage:chat.replyLanguage,quizContext,signal,complete:base&&key?async(payload,routeSignal)=>{
   const response=await fetch(base+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},signal:routeSignal,body:JSON.stringify({model,...(modelProvider?{provider:modelProvider}:{}),stream:false,max_tokens:650,temperature:0,messages:[{role:'system',content:intentPolicyFor(chat.replyLanguage)},{role:'user',content:JSON.stringify(payload)}]})});
   if(!response.ok)throw fail(502,'ยังตีความคำถามไม่ได้');
   const data=await response.json();captureUsage('intent',data);return requireHermesCompletion(data);
@@ -117,6 +119,7 @@ async function processMessage(chat,text,signal){
  }
  let result;
  if(quiz.kind==='blocked')result={answer:localize(quiz.reply,chat.replyLanguage),sources:[]};
+ else if(location)result=locationReply(location,chat.replyLanguage);
  else if(route.kind==='summary'){
   history=db.prepare('SELECT role,content,sources FROM messages WHERE chat=? ORDER BY id').all(chat.id);
   const content=await summarizeConversation(history,text,async part=>{

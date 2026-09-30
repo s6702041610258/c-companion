@@ -1,5 +1,18 @@
 import {test,expect} from '@playwright/test';
 
+test('a copied book passage shows its verified page and highlighted source',async({page})=>{
+ await page.goto('/');
+ await page.getByRole('textbox',{name:'คำถามภาษา C'}).fill('คำว่า In this phase, the intermediate assembly อยู่หน้าไหน');
+ await page.getByRole('button',{name:'ส่งคำถาม'}).click();
+ await expect(page.getByText(/พบข้อความนี้ในหนังสือหน้า 4 \(PDF หน้า 9\)/)).toBeVisible();
+ const panel=page.locator('#reference-panel');
+ await expect(panel).toBeVisible();
+ await expect(panel.locator('mark')).toContainText('In this phase, the intermediate assembly');
+ await panel.getByRole('button',{name:/เปิดหน้าที่ 4/}).click();
+ await expect(page.getByRole('dialog',{name:'หนังสือ C Companion'})).toBeVisible();
+ await expect(page.getByRole('dialog',{name:'หนังสือ C Companion'}).locator('iframe')).toHaveAttribute('src',/book\.pdf#page=9$/);
+});
+
 test('greets learners and explains the tutor without pretending to cite the book',async({page})=>{
  await page.goto('/');
  const question=page.getByRole('textbox',{name:'คำถามภาษา C'});

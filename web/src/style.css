@@ -58,3 +58,4 @@
 a.report-nav,a.report-answer{text-decoration:none}a.report-answer:hover{text-decoration:underline}a.report-nav:focus-visible,a.report-answer:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
 
 .language-help{font-size:12px;line-height:1.8;color:var(--muted);margin:10px 0 18px}
+.source-content blockquote mark{background:#e8f2b9;color:#234d32;padding:1px 3px;border-radius:3px;box-decoration-break:clone}

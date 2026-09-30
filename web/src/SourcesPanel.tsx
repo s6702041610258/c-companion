@@ -1,7 +1,7 @@
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {BookOpen,Check,ExternalLink,PanelRightClose,PanelRightOpen} from 'lucide-react';
 
-type Source={page:number,pdfPage:number,chapter:number,title:string,excerpt:string};
+type Source={page:number,pdfPage:number,chapter:number,title:string,excerpt:string,before?:string,matchedText?:string,after?:string};
 type Message={role:'user'|'assistant',content:string,sources:Source[]};
 type PanelState={index:number,page:number,open:boolean,seen:number};
 export function useSources(messages:Message[],chatId:string|null){
@@ -64,7 +64,7 @@ export function SourcesPanel({panel,onBook}:{panel:Controller,onBook:(page:numbe
      {panel.unread&&<button className="new-reference" onClick={panel.showLatest}>มีอ้างอิงจากคำตอบใหม่ <span>เปิดดู</span></button>}
      <p className="source-question" title={panel.question}>อ้างอิงสำหรับ: {panel.question||'คำตอบที่เลือก'}</p>
      <nav className="source-page-tabs" aria-label="หน้าอ้างอิงของคำตอบ">{panel.group.map(s=><button key={s.page} aria-pressed={source.page===s.page} onClick={()=>panel.selectPage(s.page)}>หน้า {s.page}</button>)}</nav>
-     <span className="source-label">จากหนังสือ C Companion</span><h2>{source.title}</h2><div className="page-pill">บทที่ {source.chapter} <span/> หน้า {source.page}</div><blockquote>{source.excerpt}…</blockquote>
+     <span className="source-label">จากหนังสือ C Companion</span><h2>{source.title}</h2><div className="page-pill">บทที่ {source.chapter} <span/> หน้า {source.page}</div><blockquote>{source.matchedText?<>{source.before} <mark>{source.matchedText}</mark> {source.after}</>:<>{source.excerpt}…</>}</blockquote>
      <p className="source-help">ข้อความต้นฉบับจากหน้าที่ใช้ตอบ เปิดหนังสือเพื่ออ่านเนื้อหาและตัวอย่างครบถ้วน</p><button className="primary-button" onClick={()=>onBook(source.pdfPage)}>เปิดหน้าที่ {source.page} <ExternalLink size={15}/></button><div className="source-footer"><Check size={15}/> เลขหน้าอ้างอิงผ่านการตรวจสอบ</div>
     </div>
    </div>

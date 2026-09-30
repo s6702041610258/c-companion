@@ -12,7 +12,7 @@ import '@fontsource/noto-sans-thai/700.css';
 import './style.css';
 import './theme.css';
 type Chapter={id:number,title:string,subtitle:string,start:number,end:number};
-type Source={page:number,pdfPage:number,chapter:number,title:string,excerpt:string};
+type Source={page:number,pdfPage:number,chapter:number,title:string,excerpt:string,before?:string,matchedText?:string,after?:string};
 type Message={id?:number,role:'user'|'assistant',content:string,sources:Source[],replyLanguage?:ReplyLanguage};
 type Chat={id:string,title:string,chapter:number,mode:Mode,replyLanguage?:ReplyLanguage};
 type Mode='ask'|'tutor'|'quiz';

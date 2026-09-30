@@ -126,3 +126,4 @@
 
 @media(max-width:760px){.theme-toggle{width:44px;min-width:44px;height:44px;padding:0}.theme-toggle span{display:none}}
 @media(max-width:360px){:root[data-theme="dark"] .feature-study{min-height:0}:root[data-theme="dark"] .study-copy{width:100%;padding:20px}:root[data-theme="dark"] .study-copy h2{font-size:17px}:root[data-theme="dark"] .code-illustration{display:none}}
+:root[data-theme="dark"] .source-content blockquote mark{background:#d8eaa2;color:#173522}
