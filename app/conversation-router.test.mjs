@@ -71,3 +71,13 @@ test('summary denial is a veto even if a model incorrectly chooses summary',asyn
  const r=await routeConversation({text:'อย่าเพิ่งสรุปที่คุยกัน',complete:async()=>completion('summary')});
  assert.equal(r.kind,'reply');assert.equal(r.reply,clarification);
 });
+
+test('chapter follow-up is interpreted with history and keeps a validated location target',async()=>{
+ const history=[{role:'user',content:'อยากเรียน if else'}];
+ const result=await routeConversation({text:'แล้วอยู่บทไหน',history,complete:async payload=>{
+  assert.equal(payload.recentHistory[0].content,history[0].content);
+  return JSON.stringify({kind:'book_location',confidence:'high',query:'if else',reply:'',locationTarget:'chapter'});
+ }});
+ assert.equal(result.kind,'book_location');assert.equal(result.locationTarget,'chapter');assert.equal(result.query,'if else');
+ assert.throws(()=>parseIntent(JSON.stringify({kind:'book_location',confidence:'high',query:'if else',reply:'',locationTarget:'invented'})));
+});

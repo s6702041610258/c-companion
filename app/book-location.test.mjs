@@ -77,3 +77,20 @@ test('copied phrases from every chapter locate the expected printed page',()=>{
   assert.deepEqual(result.matches.map(match=>match.page),[page],phrase);
  }
 });
+
+test('chapter questions answer the chapter rather than listing matching pages',()=>{
+ const result=findBookLocation(pages,'“if else” อยู่บทที่เท่าไหร่');
+ assert.equal(result?.target,'chapter');
+ assert.match(locationReply(result).answer,/บทที่ 4/);
+ assert.doesNotMatch(locationReply(result).answer,/พบข้อความนี้ใน/);
+});
+
+test('quotes inside explanation questions must not bypass intent interpretation',()=>{
+ assert.equal(findBookLocation(pages,'ช่วยอธิบาย “if else” ให้หน่อย'),null);
+ assert.equal(findBookLocation(pages,'What does “if else” mean?'),null);
+});
+
+test('chapter lookup supports Thai topics and asks for missing context',()=>{
+ assert.match(locationReply(findBookLocation(pages,'อาร์เรย์อยู่บทไหน')).answer,/บทที่ 6/);
+ assert.equal(findBookLocation(pages,'อยู่บทไหน')?.status,'needs_quote');
+});

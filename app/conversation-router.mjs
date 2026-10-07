@@ -5,10 +5,11 @@ import {isConversationSummary,declinesSummary} from './conversation-intent.mjs';
 
 export const clarification='ผมยังไม่แน่ใจว่าหมายถึงเรื่องไหนครับ อยากเริ่มเรียนภาษา C จากพื้นฐาน หรือมีคำถามเกี่ยวกับหัวข้อใดเป็นพิเศษ?';
 const replyKinds=['greeting','capabilities','learning_start','thanks','smalltalk','encouragement','clarify','out_of_scope'];
-const kinds=[...replyKinds,'language_change','c_question','summary','quiz_new','quiz_attempt','quiz_solution','quiz_hint','quiz_translate'];
-const queryKinds=['c_question','quiz_new','quiz_attempt','quiz_solution','quiz_hint','quiz_translate'];
+const kinds=[...replyKinds,'book_location','language_change','c_question','summary','quiz_new','quiz_attempt','quiz_solution','quiz_hint','quiz_translate'];
+const queryKinds=['book_location','c_question','quiz_new','quiz_attempt','quiz_solution','quiz_hint','quiz_translate'];
 export const intentPolicy=`Conversation intent: You are C Companion, a friendly Thai introductory C programming tutor. Understand the CURRENT message and choose the next action using only this conversation. Return JSON only: {"kind":"c_question","confidence":"high","query":"standalone C topic for textbook retrieval","reply":""}.
-Allowed kind: language_change, greeting, capabilities, learning_start, thanks, smalltalk, encouragement, c_question, summary, clarify, out_of_scope, quiz_new, quiz_attempt, quiz_solution, quiz_hint, quiz_translate. confidence: high or low (low MUST use clarify). reply: at most 600 characters. query: at most 500 characters, nonempty for c_question and quiz_* kinds.
+Allowed kind: book_location, language_change, greeting, capabilities, learning_start, thanks, smalltalk, encouragement, c_question, summary, clarify, out_of_scope, quiz_new, quiz_attempt, quiz_solution, quiz_hint, quiz_translate. confidence: high or low (low MUST use clarify). reply: at most 600 characters. query: at most 500 characters, nonempty for c_question and quiz_* kinds.
+book_location means the user ONLY wants the chapter or page containing a topic/quotation. Include locationTarget: "chapter" or "page", nonempty query with the exact quoted passage or standalone topic resolved from history, and empty reply. For "if else อยู่บทไหน" choose book_location, locationTarget chapter, query "if else". Never fabricate a chapter/page number; the server resolves it from the book. If the user asks to explain quoted text, or asks both a location and explanation, choose c_question instead. A bare copied textbook passage may use book_location/page. A chapter follow-up without a resolvable subject must clarify. In quiz mode retain quiz_* actions for exercise help/solutions; a pure textbook location question may use book_location without changing exercise state.
 Understand meaning, not exact spelling. Tolerate Thai phonetic spelling, colloquial language, duplicated pronouns, stray quotes, emoji and a few accidental trailing letters when intent is clear. Do not ridicule spelling or treat obvious noise as a new topic.
 learning_start means a general wish to start learning C with no topic yet, e.g. ชั้นต้องการเรียนพาสาซี”กก. greeting/capabilities/thanks apply only when no substantive question accompanies them. A greeting plus a pointer question is c_question. ภาษา C ทำอะไรได้บ้าง is c_question, not capabilities. A request to learn Python is out_of_scope, not learning_start. Flowcharts, flow chart symbols, ผังงาน and โฟลว์ชาร์ต are introductory textbook topics: route questions about them through c_question (or quiz_* in quiz mode), even when another chapter is selected. Do not decide that the book lacks content from the selected chapter or conversation history; evidence retrieval checks the book.
 Use recentHistory only to resolve a follow-up (e.g. เริ่มจากศูนย์ after an invitation to learn means c_question about introductory C/program structure; แล้วแบบที่สองล่ะ after int vs float refers to float). The quizContext field, when supplied by the server, contains the current exercise and the recorded attempt; use it even when social turns pushed the exercise out of recentHistory. In quiz mode: quiz_new is a request for a new exercise; quiz_attempt is a concrete submitted answer (code, reasoning or expected output) to the current exercise; quiz_solution is a request for its solution (including a claim "I tried already" without showing an answer); quiz_hint is a request for a hint. Never classify "ยังไม่ตอบ ขอเฉลยเลย" as an attempt. Keep query focused on the current exercise topic. Social, scope and summary kinds still apply. In tutor mode, learner answers are c_question. Never carry an old topic into an unrelated new request. If a referent cannot be determined, choose clarify with low confidence and ask one short question specifically about what is missing.
@@ -37,6 +38,8 @@ export function parseIntent(raw){
  if(value.confidence==='low'&&value.kind!=='clarify')throw Error('invalid_uncertainty');
  const query=value.query.trim();
  if(queryKinds.includes(value.kind)?!query:query!=='')throw Error('invalid_intent_query');
+ let location={};
+ if(value.kind==='book_location'){if(!['chapter','page'].includes(value.locationTarget))throw Error('invalid_location_target');location={locationTarget:value.locationTarget};}
  let language={};
  if(value.language!==undefined){
   const l=value.language;if(!l||!['th','en'].includes(l.target)||!['chat','once'].includes(l.scope))throw Error('invalid_language');
@@ -45,7 +48,7 @@ export function parseIntent(raw){
  if(value.kind==='language_change'&&!value.language)throw Error('missing_language');
  if(replyKinds.includes(value.kind))return {kind:value.kind,query:'',reply:conversationalReply(value.reply),...language};
  if(value.reply.trim())throw Error('unexpected_reply');
- return {kind:value.kind,query,...language};
+ return {kind:value.kind,query,...location,...language};
 }
 
 function fallback(text,replyLanguage){

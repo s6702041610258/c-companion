@@ -53,7 +53,10 @@ http.createServer(async(req,res)=>{
   if(input.request==='Translate the current exercise into English'){kind='quiz_translate';query='for loop';reply='';language={target:'en',scope:'once'}}
   if(input.request==='Summarize our conversation'){kind='summary';query='';reply=''}
   if((english||input.replyLanguage==='en')&&reply&&!language)reply='Hello! I can help you learn C programming.';
-  const content=input.request==='ทดสอบระบบตีความเสีย' ?'invalid json':JSON.stringify({kind,query,reply,language,confidence:'high'});
+  let locationTarget;
+  if(input.request.includes('อยู่หน้าไหน')){kind='book_location';query='In this phase, the intermediate assembly';reply='';locationTarget='page'}
+  if(input.request.includes('อยู่บทไหน')){kind='book_location';query='if else';reply='';locationTarget='chapter'}
+  const content=input.request==='ทดสอบระบบตีความเสีย' ?'invalid json':JSON.stringify({kind,query,reply,language,locationTarget,confidence:'high'});
   return res.end(JSON.stringify({choices:[{message:{content}}],usage:{prompt_tokens:10,completion_tokens:10}}));
  }
  if(last.includes('จำลองเซิร์ฟเวอร์ล้ม')){res.statusCode=503;return res.end(JSON.stringify({error:'private-provider-error-secret'}))}

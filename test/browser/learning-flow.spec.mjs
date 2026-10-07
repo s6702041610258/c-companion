@@ -132,3 +132,11 @@ test('stop while the job receipt is delayed cancels the actual server job',async
  await expect.poll(async()=>(await (await page.request.get('/api/jobs/'+jobId)).json()).status).toBe('cancelled');
  await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toHaveValue(text);
 });
+
+test('a chapter question answers the chapter before showing source evidence',async({page})=>{
+ await page.goto('/');
+ await page.getByRole('textbox',{name:'คำถามภาษา C'}).fill('if else อยู่บทไหน');
+ await page.getByRole('button',{name:'ส่งคำถาม'}).click();
+ await expect(page.getByText(/เนื้อหานี้อยู่ในบทที่ 4 เรื่อง ตัดสินใจด้วยเงื่อนไข/)).toBeVisible();
+ await expect(page.getByText(/พบข้อความนี้ในหนังสือหน้า/)).toHaveCount(0);
+});

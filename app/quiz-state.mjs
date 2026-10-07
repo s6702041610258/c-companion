@@ -1,7 +1,7 @@
 export const tryFirst='ลองตอบโจทย์นี้ก่อนสักนิดนะครับ จะเป็นโค้ด แนวคิด หรือผลลัพธ์ที่คาดก็ได้ ไม่จำเป็นต้องถูกทั้งหมด แล้วผมจะตรวจและอธิบายเฉลยให้ครับ';
 export function initQuizState(db){db.exec('CREATE TABLE IF NOT EXISTS quiz_state(chat TEXT PRIMARY KEY,exercise INTEGER NOT NULL,attempt INTEGER)')}
 export function quizDecision(state,route,text){
- if(['reply','summary'].includes(route.kind))return {kind:'pass'};
+ if(['reply','summary','book_location'].includes(route.kind))return {kind:'pass'};
  if(route.kind==='quiz_new'||(!state&&route.kind==='c_question'))return {kind:'exercise'};
  if(!state)return {kind:'blocked',reply:'เลือกหัวข้อแล้วขอแบบฝึกหัดก่อนนะครับ เช่น “ขอโจทย์เรื่องลูป for”'};
  if(route.kind==='quiz_translate')return {kind:'translation'};

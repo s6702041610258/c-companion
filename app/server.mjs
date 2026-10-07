@@ -109,12 +109,12 @@ async function processMessage(chat,text,signal){
   if(!quizState){const old=db.prepare("SELECT id FROM messages WHERE chat=? AND role='assistant' AND sources!='[]' ORDER BY id DESC LIMIT 1").get(chat.id);if(old)quizState={exercise:old.id,attempt:null}}
   if(quizState)quizContext=db.prepare('SELECT id,role,content,sources FROM messages WHERE chat=? AND id IN (?,?) ORDER BY id').all(chat.id,quizState.exercise,quizState.attempt||-1);
  }
- const location=chat.mode==='quiz'?null:findBookLocation(pages,text,{chapter:chat.chapter});
- const route=location?{kind:'book_location',query:''}:await routeConversation({text,history,mode:chat.mode,chapter:chat.chapter,replyLanguage:chat.replyLanguage,quizContext,signal,complete:base&&key?async(payload,routeSignal)=>{
+ const route=await routeConversation({text,history,mode:chat.mode,chapter:chat.chapter,replyLanguage:chat.replyLanguage,quizContext,signal,complete:base&&key?async(payload,routeSignal)=>{
   const response=await fetch(base+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},signal:routeSignal,body:JSON.stringify({model,...(modelProvider?{provider:modelProvider}:{}),stream:false,max_tokens:650,temperature:0,messages:[{role:'system',content:intentPolicyFor(chat.replyLanguage)},{role:'user',content:JSON.stringify(payload)}]})});
   if(!response.ok)throw fail(502,'ยังตีความคำถามไม่ได้');
   const data=await response.json();captureUsage('intent',data);return requireHermesCompletion(data);
  }:undefined});
+ const location=route.kind==='book_location'?findBookLocation(pages,text,{target:route.locationTarget,query:route.query}):route.kind==='fallback'&&chat.mode!=='quiz'?findBookLocation(pages,text,{chapter:chat.chapter}):null;
  const preferredLanguage=route.preferredLanguage||chat.replyLanguage;
  chat={...chat,replyLanguage:route.replyLanguage||chat.replyLanguage};
  let quiz={kind:'pass'};

@@ -1,7 +1,10 @@
+import {terms} from './retrieval.mjs';
 import {chapters} from './curriculum.mjs';
 
 const wordPattern=/[\p{L}\p{M}\p{N}_]+/gu;
 const pageQuestion=/(?:หน้าไหน|หน้าใด|หน้าอะไร|หน้าที่เท่า(?:ไร|ไหร่)|มาจากหน้า|อยู่หน้า|ปรากฏในหน้า|\b(?:which|what)\s+page\b|\bwhere\s+in\s+the\s+book\b)/i;
+const chapterQuestion=/(?:บท(?:ที่)?(?:เท่า(?:ไร|ไหร่)|ไหน|ใด|อะไร)|(?:which|what)\s+chapter)/i;
+const explanation=/(?:อธิบาย|คืออะไร|หมายถึง|อย่างไร|ยังไง|ยกตัวอย่าง|explain|what.*mean|how\b|why\b)/i;
 const clean=text=>text.replace(/\s+/g,' ').trim();
 
 function tokens(text){
@@ -55,24 +58,38 @@ function firstMatch(page,queryTokens){
  return null;
 }
 
-export function findBookLocation(pages,message,{chapter=0}={}){
+export function findBookLocation(pages,message,{chapter=0,target,query:resolvedQuery}={}){
  // A location request always searches the whole book; a selected lesson must not hide the source.
  void chapter;
- const explicit=pageQuestion.test(message);
- const query=phraseFromQuestion(message,explicit);
- if(!query)return explicit?{status:'needs_quote',query:'',matches:[]}:null;
+ target=target||(chapterQuestion.test(message)?'chapter':'page');
+ const explicit=pageQuestion.test(message)||chapterQuestion.test(message)||resolvedQuery!==undefined;
+ if(resolvedQuery===undefined&&explanation.test(message))return null;
+ // Quotation marks alone do not mean the learner is asking for a location.
+ if(!explicit&&/[“”"‘’`]/.test(message))return null;
+ let query=resolvedQuery??phraseFromQuestion(message,explicit);
+ if(target==='chapter'&&!query)query=message.replace(/(?:อยู่|ใน)?\s*บท(?:ที่)?(?:เท่า(?:ไร|ไหร่)|ไหน|ใด|อะไร).*$/,'').replace(/^(?:เรื่อง|หัวข้อ|คำว่า)\s*/,'').trim();
+ if(target==='chapter'&&query&&query.length<=150&&tokens(query).length<=5){
+  const needles=terms(query);
+  const candidates=chapters.map(c=>({c,score:c.keywords.split(' ').filter(k=>needles.includes(k)).length})).filter(x=>x.score>0);
+  const selected=candidates.sort((a,b)=>b.score-a.score).map(x=>x.c);
+  if(selected.length){
+   const matches=selected.map(c=>pages.find(p=>p.page===c.start)).filter(Boolean).map(p=>({page:p.page,pdfPage:p.pdfPage,chapter:p.chapter,before:'',matchedText:clean(p.text.slice(0,300)),after:''}));
+   return {status:'found',target,query,matches};
+  }
+ }
+ if(!query)return explicit?{status:'needs_quote',target,query:'',matches:[]}:null;
  const words=tokens(query).map(token=>token.word);
- if(!words.length||query.length>500)return explicit?{status:'needs_quote',query:'',matches:[]}:null;
+ if(!words.length||query.length>500)return explicit?{status:'needs_quote',target,query:'',matches:[]}:null;
  const matches=pages.map(page=>firstMatch(page,words)).filter(Boolean);
  if(!explicit&&!matches.length)return null;
- return {status:matches.length>6?'ambiguous':matches.length?'found':'not_found',query,matches};
+ return {status:matches.length>6&&target!=='chapter'?'ambiguous':matches.length?'found':'not_found',target,query,matches};
 }
 
 export function locationReply(result,language='th'){
  if(result.status!=='found'){
   const english=language==='en';
   const answer=result.status==='needs_quote'
-   ?english?'Please paste the word or sentence whose page you want to find.':'กรุณาวางคำหรือประโยคที่ต้องการค้นหาหน้าในหนังสือครับ'
+   ?english?'Please paste the word or sentence whose page you want to find.':result.target==='chapter'?'ต้องการทราบว่าเรื่องใดอยู่บทไหนครับ กรุณาระบุหัวข้อหรือข้อความในหนังสือ':'กรุณาวางคำหรือประโยคที่ต้องการค้นหาหน้าในหนังสือครับ'
    :result.status==='ambiguous'
     ?english?`This short phrase appears on ${result.matches.length} pages. Please paste a longer sentence so I can identify the right passage.`:`ข้อความสั้นนี้พบใน ${result.matches.length} หน้า กรุณาวางประโยคที่ยาวขึ้นเพื่อระบุตำแหน่งให้ชัดครับ`
     :english?'I could not find that exact wording in the extracted book text. Please check the spelling or paste a longer passage.':'ไม่พบข้อความนี้ในข้อความที่ดึงจากหนังสือ กรุณาตรวจคำสะกดหรือวางประโยคที่ยาวขึ้นครับ';
@@ -81,7 +98,8 @@ export function locationReply(result,language='th'){
  const locations=result.matches.map(m=>language==='en'
   ?`printed page ${m.page} (PDF page ${m.pdfPage})`
   :`หนังสือหน้า ${m.page} (PDF หน้า ${m.pdfPage})`).join(language==='en'?', ':' และ ');
- const answer=language==='en'
+ const chapterNames=[...new Set(result.matches.map(m=>m.chapter))].map(id=>{const c=chapters[id-1];return language==='en'?`Chapter ${id} (${c.title}), printed pages ${c.start}–${c.end}`:`บทที่ ${id} เรื่อง ${c.title} (หนังสือหน้า ${c.start}–${c.end})`;}).join(language==='en'?'; ':' และ ');
+ const answer=result.target==='chapter'?(language==='en'?`This topic is covered in ${chapterNames}.`:`เนื้อหานี้อยู่ใน${chapterNames} ครับ`):language==='en'
   ?`I found that wording on ${locations}. Open the source panel to see the matching passage and the original book page.`
   :`พบข้อความนี้ใน${locations} ครับ เปิดแหล่งอ้างอิงเพื่อดูช่วงข้อความที่ตรงกันและหน้าหนังสือจริงได้`;
  const sources=result.matches.map(m=>({
