@@ -99,13 +99,13 @@ test('reading theme follows the system and remembers a manual choice',async({pag
  await page.goto('/');
  await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
  await expect(page.getByRole('button',{name:'เปลี่ยนเป็นโหมดสว่าง'})).toBeVisible();
- expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(13, 16, 20)');
+ expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(16, 21, 27)');
  await page.getByRole('button',{name:'เปลี่ยนเป็นโหมดสว่าง'}).click();
  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
  await page.reload();
  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
  await expect(page.getByRole('button',{name:'เปลี่ยนเป็นโหมดมืด'})).toBeVisible();
- expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(252, 253, 252)');
+ expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(247, 250, 248)');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });
 

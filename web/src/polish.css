@@ -1,0 +1,83 @@
+/* Quiet reading room: the companion portrait is the focal point. */
+:root{--room-surface:#fff;--room-canvas:#f7faf8;--room-border:#dce7df;--room-shadow:0 8px 24px #24463308}
+:root[data-theme="dark"]{--room-surface:#191f27;--room-canvas:#10151b;--room-border:#34404d;--room-shadow:none}
+.bot-portrait{display:block;width:100%;height:100%;flex:none}
+.brand-mark,:root[data-theme="dark"] .brand-mark{width:46px;height:46px;border-radius:15px;background:none;box-shadow:none;overflow:hidden}
+.brand{gap:12px;margin-bottom:26px}
+.sidebar{padding-top:24px}
+.sidebar .new-chat{min-height:46px;flex-shrink:0}
+.sidebar .nav-caption{margin-top:24px}
+.history-heading{margin-top:23px}
+.history-row{margin-bottom:3px}
+.history-row.selected{box-shadow:inset 3px 0 #34765b}
+:root[data-theme="dark"] .history-row.selected{box-shadow:inset 3px 0 var(--accent)}
+.sidebar-book{border-top:1px solid var(--room-border);margin-top:12px;padding:18px 3px}
+.header-portrait{width:32px;height:32px;border-radius:11px;overflow:hidden}
+.topbar{height:72px}
+.topbar-actions{gap:8px}
+.main,:root[data-theme="dark"] .main{background:var(--room-canvas)}
+.welcome{padding-top:30px;padding-bottom:26px}
+.welcome-guide{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.welcome-portrait{width:72px;height:72px;flex-shrink:0;transform:rotate(-4deg)}
+.welcome-guide strong{display:block;font-size:18px;font-weight:600;color:var(--ink)}
+:root[data-theme="dark"] .welcome-guide strong{color:var(--text)}
+.welcome-guide .welcome-eyebrow{margin:8px 0 0;font-size:12px}
+.welcome h1{font-size:clamp(28px,2.6vw,39px);letter-spacing:-.7px;margin-bottom:12px}
+.welcome-description{margin-bottom:14px}
+.language-help{margin-bottom:22px}
+.feature-study{border-color:var(--room-border);border-radius:18px}
+.suggestions>button{border-color:var(--room-border);box-shadow:0 2px 3px #24463303;border-radius:12px}
+.suggestion-icon{width:30px;height:30px;border-radius:9px;background:#edf4ee;display:grid;place-items:center;color:#34765b}
+:root[data-theme="dark"] .suggestion-icon{background:var(--accent-soft);color:var(--accent)}
+.messages{padding-top:24px;padding-bottom:28px}
+.conversation-context{padding-bottom:15px;margin-bottom:26px;gap:12px}
+.message{gap:12px;margin-bottom:28px}
+.message-avatar.assistant,:root[data-theme="dark"] .message-avatar.assistant{width:38px;height:38px;border-radius:13px;background:none;overflow:hidden}
+.message.assistant .message-body{padding:16px 20px;background:var(--room-surface);border:1px solid var(--room-border);border-radius:4px 18px 18px 18px;box-shadow:var(--room-shadow)}
+.message.assistant .message-author{margin:0 0 10px;font-size:12px;color:#46745b}
+:root[data-theme="dark"] .message.assistant .message-author{color:var(--accent)}
+.message.assistant .prose>:last-child{margin-bottom:0}
+.message.assistant .prose>:first-child{margin-top:0}
+.message.user .message-body{box-shadow:none}
+.message.user .message-avatar{margin-top:5px}
+.citation-list{padding-top:12px;border-top:1px solid var(--room-border)}
+.citation-list button{min-height:32px}
+.report-answer{margin-top:12px;font-size:11px}
+.composer-area,:root[data-theme="dark"] .composer-area{background:var(--room-canvas);padding-top:12px}
+.mode-toolbar{gap:12px;margin-bottom:10px}
+.mode-tabs{padding:3px;border:1px solid var(--room-border);background:var(--room-surface);border-radius:11px;gap:2px}
+.mode-tabs button{border-radius:8px;min-height:36px;padding:7px 10px}
+.composer,:root[data-theme="dark"] .composer{border-color:var(--room-border);border-radius:17px;box-shadow:var(--room-shadow);padding:14px 16px 12px}
+.composer textarea{line-height:1.8;font-size:15px}
+.composer-note{line-height:1.7}
+.send-button,.stop-button{border-radius:12px;width:40px;height:40px}
+.thinking{align-items:flex-start;gap:12px}
+@media(max-width:1100px){.has-source .message.assistant .message-body{padding:13px}.has-source .mode-tabs button{padding-inline:6px}}
+@media(max-width:760px){
+ .topbar{height:61px}
+ .welcome{padding:24px 20px}
+ .welcome-guide{gap:13px;margin-bottom:20px}
+ .welcome-portrait{width:60px;height:60px}
+ .welcome-guide strong{font-size:16px}
+ .welcome h1{font-size:29px;line-height:1.5}
+ .welcome-description{font-size:14px}
+ .messages{padding:18px 14px 24px}
+ .message{gap:8px;margin-bottom:24px}
+ .message-avatar.assistant,:root[data-theme="dark"] .message-avatar.assistant{width:30px;height:30px;border-radius:10px}
+ .message.assistant{margin-right:5px}
+ .message.assistant .message-body{padding:13px 14px;border-radius:4px 15px 15px 15px}
+ .message.user{max-width:90%}
+ .prose{font-size:15px;line-height:1.9}
+ .conversation-context{font-size:11px;gap:8px}
+ .composer-area{padding-inline:14px}
+ .mode-toolbar{gap:5px}
+ .mode-tabs{padding:2px;min-width:0}
+ .mode-tabs button{font-size:11px;padding:6px;gap:4px;min-height:38px}
+ .chapter-selector{font-size:10px}
+ .composer{padding:12px}
+ .composer textarea{font-size:16px}
+ .composer-bottom>span{font-size:10px}
+ .composer-note{font-size:9px}
+ .suggestion-icon{width:30px;flex-shrink:0}
+}
+@media(max-width:370px){.mode-tabs button{font-size:10px;padding-inline:4px}.mode-tabs svg{width:12px}.chapter-selector{font-size:9px}.message.assistant .message-body{padding:11px}.conversation-context{gap:5px}}
