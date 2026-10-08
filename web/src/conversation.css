@@ -1,0 +1,21 @@
+/* Keep speaker position stable while leaving room for explanations and code. */
+.message{align-items:flex-start;margin-bottom:26px}
+.message.assistant{margin-right:clamp(12px,3%,28px)}
+.message.user{flex-direction:row-reverse;margin-left:auto;max-width:82%}
+.message.user .message-body{flex:0 1 auto;max-width:100%;padding:12px 18px;background:#e8f2eb;border:1px solid #d2e4d8;border-radius:18px 4px 18px 18px}
+.message.user .message-author{text-align:right;color:#39664d;margin:0 0 6px}
+.message.user .message-avatar{margin-top:3px;background:#27674b;color:#fff}
+.message.assistant .message-author{margin-top:5px}
+.message.user .prose>:last-child{margin-bottom:0}
+.message.user .prose>:first-child{margin-top:0}
+.message.user .prose{text-align:left}
+.message.user .code-wrap{max-width:100%}
+:root[data-theme="dark"] .message.user .message-body{background:#283442;border-color:#43556b}
+:root[data-theme="dark"] .message.user .message-author{color:#cadbf1}
+:root[data-theme="dark"] .message.user .message-avatar{background:#435b77;color:#f7faff}
+@media(max-width:760px){
+ .message{gap:8px;margin-bottom:24px}
+ .message.user{max-width:90%}
+ .message.user .message-body{padding:10px 13px;border-radius:16px 4px 16px 16px}
+ .message.assistant{margin-right:12px}
+}
