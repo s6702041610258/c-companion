@@ -1,6 +1,6 @@
 # C Companion
 
-**รุ่นปัจจุบัน 1.7.0** · [ดาวน์โหลดและบันทึกรุ่น](https://github.com/s6702041610258/c-companion/releases/tag/v1.7.0) · คู่มือปรับปรุง 9 ตุลาคม 2569
+**รุ่นปัจจุบัน 1.7.1** · [ดาวน์โหลดและบันทึกรุ่น](https://github.com/s6702041610258/c-companion/releases/tag/v1.7.1) · คู่มือปรับปรุง 9 ตุลาคม 2569
 
 **แชทบอทช่วยเรียนภาษา C** ที่อธิบายบทเรียน ตอบคำถาม และชวนฝึกเขียนโปรแกรมโดยอ้างอิงหนังสือที่แนบมา ใช้งานผ่านเบราว์เซอร์บนเครื่องของคุณ พร้อม Hermes Agent ที่เริ่มผ่าน Docker ในชุดเดียวกัน
 
@@ -82,3 +82,5 @@ bash start.sh
 [โครงสร้างและการดูแลระบบ](docs/OPERATIONS-TH.md) · [สถานะโปรเจกต์](docs/PROJECT-STATUS-TH.md) · [การทดสอบ](docs/READINESS-TH.md) · [บันทึก README ฉบับละเอียดและประวัติรุ่น](docs/README-DETAILS-TH.md)
 
 ระบบใช้ React, TypeScript, Node.js, SQLite, Docker Compose และ Hermes Agent ดูขั้นตอนตรวจรุ่นและเผยแพร่ได้ที่ [Release process](docs/RELEASE-PROCESS-TH.md)
+
+[โฟลว์การทำงานและข้อสรุปความพร้อม](docs/CHATBOT-FLOW-TH.md) · คู่มือ1.7.0ยังใช้กับ1.7.1ได้ เพราะขั้นตอนใช้งานเหมือนเดิม
