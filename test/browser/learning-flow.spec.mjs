@@ -99,13 +99,13 @@ test('reading theme follows the system and remembers a manual choice',async({pag
  await page.goto('/');
  await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
  await expect(page.getByRole('button',{name:'เปลี่ยนเป็นโหมดสว่าง'})).toBeVisible();
- expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(16, 21, 27)');
+ expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(16, 26, 34)');
  await page.getByRole('button',{name:'เปลี่ยนเป็นโหมดสว่าง'}).click();
  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
  await page.reload();
  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
  await expect(page.getByRole('button',{name:'เปลี่ยนเป็นโหมดมืด'})).toBeVisible();
- expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(247, 250, 248)');
+ expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(239, 246, 245)');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });
 
@@ -139,4 +139,19 @@ test('a chapter question answers the chapter before showing source evidence',asy
  await page.getByRole('button',{name:'ส่งคำถาม'}).click();
  await expect(page.getByText(/เนื้อหานี้อยู่ในบทที่ 4 เรื่อง ตัดสินใจด้วยเงื่อนไข/)).toBeVisible();
  await expect(page.getByText(/พบข้อความนี้ในหนังสือหน้า/)).toHaveCount(0);
+});
+
+// Navigation remains reachable when the decorative workspace is resized.
+test('keyboard skip link and mobile menu identify the chat navigation',async({page})=>{
+ await page.goto('/');
+ await page.keyboard.press('Tab');
+ await expect(page.getByRole('link',{name:'ข้ามไปพื้นที่แชท'})).toBeFocused();
+ await page.keyboard.press('Enter');
+ await expect(page.locator('#chat-main')).toBeFocused();
+ await page.setViewportSize({width:320,height:740});
+ const menu=page.getByRole('button',{name:'เปิดเมนู',exact:true});
+ await expect(menu).toHaveAttribute('aria-expanded','false');
+ await menu.click();
+ await expect(menu).toHaveAttribute('aria-expanded','true');
+ await expect(page.getByRole('complementary',{name:'เมนูหลัก'})).toBeVisible();
 });
