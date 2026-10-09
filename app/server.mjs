@@ -1,3 +1,4 @@
+import {clearChatHistory} from './chat-history.mjs';
 import {initLanguages,getLanguage,setLanguage,validateLanguage,languagePolicy,localize,localizedError} from './language.mjs';
 import {createWriteGuard} from './write-guard.mjs';
 import {initQuizState,quizDecision,quizInstruction} from './quiz-state.mjs';
@@ -174,6 +175,7 @@ const server=http.createServer(async(req,res)=>{
  if(path==='/api/bootstrap'&&req.method==='GET'){
   return json(res,200,{chapters,configured:!!(base&&key),progress:db.prepare('SELECT chapter FROM progress WHERE owner=?').all(user).map(p=>p.chapter),chats:db.prepare('SELECT c.id,c.title,c.chapter,c.mode,c.created FROM chats c WHERE c.owner=? AND EXISTS (SELECT 1 FROM messages m WHERE m.chat=c.id) ORDER BY c.created DESC LIMIT 50').all(user)});
  }
+ if(path==='/api/chats'&&req.method==='DELETE')return json(res,200,clearChatHistory(db,user,id=>jobs.busy(id)));
  if(path==='/api/chats'&&req.method==='POST'){
   guardWrite('chat',user);
   const b=await body(req);const chapter=Number(b.chapter||0);const mode=b.mode||'ask';const replyLanguage=validateLanguage(b.replyLanguage===undefined?'th':b.replyLanguage);
