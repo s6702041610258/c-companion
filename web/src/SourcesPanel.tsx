@@ -4,17 +4,17 @@ import {BookOpen,Check,ExternalLink,PanelRightClose,PanelRightOpen} from 'lucide
 type Source={page:number,pdfPage:number,chapter:number,title:string,excerpt:string,before?:string,matchedText?:string,after?:string};
 type Message={role:'user'|'assistant',content:string,sources:Source[]};
 type PanelState={index:number,page:number,open:boolean,seen:number};
-export function useSources(messages:Message[],chatId:string|null){
+export function useSources(messages:Message[],chatId:string|null,autoReveal=true){
  const key=chatId||'new';
  const [saved,setSaved]=useState<Record<string,PanelState>>({});
  const latest=messages.reduce((found,m,i)=>m.sources?.length?i:found,-1);
- const fallback:PanelState={index:latest,page:messages[latest]?.sources[0]?.page||0,open:true,seen:latest};
+ const fallback:PanelState={index:latest,page:messages[latest]?.sources[0]?.page||0,open:autoReveal,seen:autoReveal?latest:latest-1};
  const state=saved[key]||fallback;
  const group=messages[state.index]?.sources?.length?messages[state.index].sources:messages[latest]?.sources||[];
  const source=group.find(s=>s.page===state.page)||group[0]||null;
  const open=!!source&&state.open;
  const update=(change:Partial<PanelState>)=>setSaved(prev=>({...prev,[key]:{...(prev[key]||fallback),...change}}));
- useEffect(()=>{if(latest>=0)setSaved(prev=>!prev[key]||latest>prev[key].seen?{...prev,[key]:{index:latest,page:messages[latest].sources[0].page,open:true,seen:latest}}:prev)},[key,latest]);
+ useEffect(()=>{if(latest>=0)setSaved(prev=>!prev[key]||(autoReveal&&latest>prev[key].seen)?{...prev,[key]:{index:latest,page:messages[latest].sources[0].page,open:autoReveal,seen:autoReveal?latest:latest-1}}:prev)},[key,latest]);
  const toggleRef=useRef<HTMLButtonElement>(null);
  const close=()=>{update({open:false});requestAnimationFrame(()=>toggleRef.current?.focus({preventScroll:true}))};
  return {

@@ -1,3 +1,5 @@
+import {listChats} from './chat-list.mjs';
+import {createConnectionCheck} from './connection-check.mjs';
 import {clearChatHistory} from './chat-history.mjs';
 import {initLanguages,getLanguage,setLanguage,validateLanguage,languagePolicy,localize,localizedError} from './language.mjs';
 import {createWriteGuard} from './write-guard.mjs';
@@ -30,6 +32,7 @@ initLanguages(db);
 db.exec("PRAGMA busy_timeout=5000; CREATE INDEX IF NOT EXISTS messages_chat_id ON messages(chat,id); CREATE INDEX IF NOT EXISTS chats_owner_created ON chats(owner,created); CREATE INDEX IF NOT EXISTS reports_created ON reports(created);");
 const base=(process.env.HERMES_BASE_URL||'').replace(/\/$/,'');
 const key=process.env.HERMES_API_KEY||'';
+const checkConnection=createConnectionCheck({base,key});
 const model=process.env.HERMES_MODEL||'hermes-agent';
 const modelProvider=process.env.HERMES_PROVIDER?.trim();
 function captureUsage(phase,data){try{recordModelUsage(db,phase,data)}catch(error){console.error('usage_recording_failed',error.name)}}
@@ -175,6 +178,8 @@ const server=http.createServer(async(req,res)=>{
  if(path==='/api/bootstrap'&&req.method==='GET'){
   return json(res,200,{chapters,configured:!!(base&&key),progress:db.prepare('SELECT chapter FROM progress WHERE owner=?').all(user).map(p=>p.chapter),chats:db.prepare('SELECT c.id,c.title,c.chapter,c.mode,c.created FROM chats c WHERE c.owner=? AND EXISTS (SELECT 1 FROM messages m WHERE m.chat=c.id) ORDER BY c.created DESC LIMIT 50').all(user)});
  }
+ if(path==='/api/connection'&&req.method==='GET')return json(res,200,await checkConnection());
+ if(path==='/api/chats'&&req.method==='GET')return json(res,200,listChats(db,user,{query:url.searchParams.get('q')||'',cursor:url.searchParams.get('cursor')||''}));
  if(path==='/api/chats'&&req.method==='DELETE')return json(res,200,clearChatHistory(db,user,id=>jobs.busy(id)));
  if(path==='/api/chats'&&req.method==='POST'){
   guardWrite('chat',user);
@@ -214,6 +219,7 @@ const server=http.createServer(async(req,res)=>{
  if(req.method!=='GET'&&req.method!=='HEAD')throw fail(404,'ไม่พบรายการนี้');
  let file;
  if(path==='/book.pdf')file=resolve(root,'book/book.pdf');
+ else if(path==='/manual.pdf')file=resolve(root,'คู่มือการใช้งานและติดตั้งแชทบอท.pdf');
  else {const relative=path==='/'?'index.html':path.replace(/^\/+/,'');file=resolve(root,'dist',relative);if(!file.startsWith(resolve(root,'dist')+'/'))throw fail(403,'ไม่อนุญาต')}
  if(!existsSync(file)||!statSync(file).isFile())throw fail(404,'ไม่พบหน้าที่ต้องการ');
  const size=statSync(file).size;res.setHeader('Content-Type',mime[extname(file)]||'application/octet-stream');
