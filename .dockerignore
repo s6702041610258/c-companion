@@ -13,3 +13,7 @@ backups/
 ops-state/
 ops-private/
 evaluation/results*.json
+
+landing/.next
+landing/out
+landing/node_modules

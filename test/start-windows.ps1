@@ -10,7 +10,7 @@ Set-Content -Path (Join-Path $fakeBin 'docker.cmd') -Encoding ASCII -Value @'
 @echo off
 if "%~1"=="image" if "%~2"=="inspect" (
   if "%TEST_DOCKER_MODE%"=="healthy" exit /b 0
-  if "%TEST_DOCKER_MODE%"=="app-missing" if not "%~3"=="c-companion:1.8.0" exit /b 0
+  if "%TEST_DOCKER_MODE%"=="app-missing" if not "%~3"=="c-companion:1.9.0" exit /b 0
   echo Error response from daemon: No such image 1>&2
   exit /b 1
 )

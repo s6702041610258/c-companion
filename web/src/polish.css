@@ -113,3 +113,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
 :root[data-theme="dark"] .composer:focus-within{box-shadow:0 0 0 3px #78b39b33}
 :root[data-theme="dark"] .citation-list button,:root[data-theme="dark"] .sources-toggle.active{border-color:var(--room-border)}
 @media(max-width:760px){.topbar-actions .sources-toggle>span{display:none}.topbar-actions .sources-toggle{width:40px;justify-content:center}}
+
+.landing-link{display:block;color:var(--focus);font-size:13px;line-height:1.8;margin:14px 0;text-decoration:underline;text-underline-offset:4px}

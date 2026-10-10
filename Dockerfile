@@ -1,14 +1,18 @@
 FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS build
 WORKDIR /app
 COPY package*.json ./
+COPY landing/package.json ./landing/package.json
 RUN npm ci --no-audit --no-fund
 COPY index.html vite.config.ts tsconfig.json ./
 COPY web ./web
+COPY landing ./landing
+COPY ops/copy-landing.mjs ./ops/copy-landing.mjs
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx tsc && npm run build
 FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
 WORKDIR /app
 ENV NODE_ENV=production
-ARG RELEASE_ID=1.8.0
+ARG RELEASE_ID=1.9.0
 ARG SOURCE_REVISION=unknown
 ENV RELEASE_ID=$RELEASE_ID
 LABEL org.opencontainers.image.revision=$SOURCE_REVISION

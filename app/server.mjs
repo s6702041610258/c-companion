@@ -160,13 +160,17 @@ async function processMessage(chat,text,signal){
 const jobs=createJobs(db,processMessage);
 const guardWrite=createWriteGuard();
 const mime={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.woff2':'font/woff2','.woff':'font/woff','.svg':'image/svg+xml','.png':'image/png','.pdf':'application/pdf'};
+const securityPolicy="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; script-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'";
+const landingHashFile=resolve(root,'dist/welcome/csp-hashes.json');
+const landingHashes=existsSync(landingHashFile)?JSON.parse(readFileSync(landingHashFile,'utf8')).filter(value=>/^'sha256-[A-Za-z0-9+/=]+'$/.test(value)):[];
 const server=http.createServer(async(req,res)=>{
  let responseLanguage=req.headers['x-reply-language']==='en'?'en':'th';
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
- res.setHeader('Content-Security-Policy',"default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; script-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
+ res.setHeader('Content-Security-Policy',securityPolicy);
  try{
  const url=new URL(req.url,'http://localhost');
  const path=url.pathname.replace(/^\/c-tutor(?=\/)/,'');
+ if(['/welcome','/welcome/','/welcome/index.html'].includes(path))res.setHeader('Content-Security-Policy',securityPolicy.replace("script-src 'self'","script-src 'self' "+landingHashes.join(' ')));
  if(req.method!=='GET'&&req.method!=='HEAD'){
   const origin=req.headers.origin;
   let originMatches=!origin;
@@ -218,12 +222,13 @@ const server=http.createServer(async(req,res)=>{
  }
  if(req.method!=='GET'&&req.method!=='HEAD')throw fail(404,'ไม่พบรายการนี้');
  let file;
- if(path==='/book.pdf')file=resolve(root,'book/book.pdf');
+ if(['/welcome','/welcome/','/welcome/index.html'].includes(path))file=resolve(root,'dist/welcome/index.html');
+ else if(path==='/book.pdf')file=resolve(root,'book/book.pdf');
  else if(path==='/manual.pdf')file=resolve(root,'คู่มือการใช้งานและติดตั้งแชทบอท.pdf');
  else {const relative=path==='/'?'index.html':path.replace(/^\/+/,'');file=resolve(root,'dist',relative);if(!file.startsWith(resolve(root,'dist')+'/'))throw fail(403,'ไม่อนุญาต')}
  if(!existsSync(file)||!statSync(file).isFile())throw fail(404,'ไม่พบหน้าที่ต้องการ');
  const size=statSync(file).size;res.setHeader('Content-Type',mime[extname(file)]||'application/octet-stream');
- res.setHeader('Cache-Control',path.includes('/assets/')?'public, max-age=31536000, immutable':'no-cache');
+ res.setHeader('Cache-Control',(path.includes('/assets/')||path.startsWith('/welcome/_next/static/'))?'public, max-age=31536000, immutable':'no-cache');
  res.setHeader('Accept-Ranges','bytes');
  const range=req.headers.range?.match(/^bytes=(\d+)-(\d*)$/);
  if(range){const start=Number(range[1]),end=range[2]?Math.min(Number(range[2]),size-1):size-1;if(start>end||start>=size){res.writeHead(416,{'Content-Range':'bytes */'+size});return res.end()}
