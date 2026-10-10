@@ -1,5 +1,5 @@
 'use client';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {BookOpen,MessageCircle,GraduationCap,Target,ArrowUp,Check,ChevronRight} from 'lucide-react';
 import {DragonMark} from './DragonMark';
 const examples=[
@@ -9,6 +9,7 @@ const examples=[
 ];
 export function Demo(){
  const [selected,setSelected]=useState(0);const example=examples[selected];
+ useEffect(()=>{const select=(event:Event)=>{const index=(event as CustomEvent<number>).detail;if(Number.isInteger(index)&&index>=0&&index<examples.length)setSelected(index)};window.addEventListener('cc-demo-mode',select);return()=>window.removeEventListener('cc-demo-mode',select)},[]);
  return <div className="demo-shell">
   <div className="demo-bar"><span><i/><i/><i/></span><span>C Companion / ห้องติว</span><span className="demo-badge">ตัวอย่างการสนทนา</span></div>
   <div className="demo-layout"><div className="demo-sidebar"><span className="demo-brand"><DragonMark/>C Companion</span><p>อยากเรียนแบบไหน?</p><div role="tablist" aria-label="ตัวอย่างโหมดการเรียน">{examples.map((e,i)=><button key={e.label} id={'demo-tab-'+i} role="tab" aria-selected={selected===i} aria-controls="demo-panel" tabIndex={selected===i?0:-1} onClick={()=>setSelected(i)} onKeyDown={event=>{let next=i;if(event.key==='ArrowDown'||event.key==='ArrowRight')next=(i+1)%3;else if(event.key==='ArrowUp'||event.key==='ArrowLeft')next=(i+2)%3;else if(event.key==='Home')next=0;else if(event.key==='End')next=2;else return;event.preventDefault();setSelected(next);document.getElementById('demo-tab-'+next)?.focus()}}><e.icon size={18}/>{e.label}<ChevronRight size={15}/></button>)}</div><div className="demo-sidebar-bottom"><BookOpen size={18}/><span>เรียนจากหนังสือ<br/><b>12 บทภาษา C</b></span></div></div>

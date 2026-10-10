@@ -14,9 +14,13 @@ test('landing hydrates under hash-based CSP and demo tabs work with keyboard wit
  expect((await request.head('/manual.pdf')).ok()).toBe(true);expect((await request.head('/book.pdf')).ok()).toBe(true);
 });
 
-test('motion can be disabled mid-scroll, removing pinning while keeping every mode readable',async({page})=>{
+test('native mode gallery stays controllable without trapping page scroll and motion can be disabled',async({page})=>{
  await page.setViewportSize({width:1440,height:900});await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('/welcome/');
- await expect(page.locator('html')).toHaveAttribute('data-motion','on');await expect(page.locator('.pin-spacer')).toHaveCount(1);
+ await expect(page.locator('html')).toHaveAttribute('data-motion','on');await expect(page.locator('.pin-spacer')).toHaveCount(0);
+ await page.getByRole('button',{name:'ฝึกทำโจทย์',exact:true}).click();
+ await expect(page.locator('.quiz-card h3')).toBeInViewport();
+ await page.getByRole('button',{name:'โหมดก่อนหน้า'}).click();
+ await expect(page.locator('.tutor-card h3')).toBeInViewport();
  await page.locator('.quiz-card a').focus();await expect(page.locator('.quiz-card a')).toBeInViewport({ratio:.9});
  await page.getByRole('button',{name:'ลดการเคลื่อนไหว',exact:true}).click();
  await expect(page.locator('html')).toHaveAttribute('data-motion','off');await expect(page.locator('.pin-spacer')).toHaveCount(0);await expect(page.locator('#dragon-scene canvas')).toHaveCount(0);
@@ -42,7 +46,7 @@ test('WebGL failure keeps the illustrated fallback, usable links and working exa
 
 test('static landing remains readable and navigable with JavaScript disabled',async({browser})=>{
  const context=await browser.newContext({javaScriptEnabled:false});const page=await context.newPage();
- try{await page.goto('http://127.0.0.1:18080/welcome/');await expect(page.getByRole('heading',{level:1})).toContainText('curiosity');await expect(page.locator('.chapter-item')).toHaveCount(12);
+ try{await page.goto('http://127.0.0.1:18080/welcome/');await expect(page.getByRole('heading',{level:1})).toContainText('เข้าใจภาษา C');await expect(page.locator('.chapter-item')).toHaveCount(12);
  await page.locator('summary').filter({hasText:'ต้องเขียนภาษา C เป็นก่อนหรือไม่?'}).click();await expect(page.getByText('เริ่มจากพื้นฐานได้',{exact:false})).toBeVisible();
  await page.getByRole('link',{name:'เริ่มเรียนภาษา C',exact:true}).click();await expect(page).toHaveURL('http://127.0.0.1:18080/chat/');
  }finally{await context.close()}
@@ -75,4 +79,16 @@ test('home always opens Welcome before entering chat, including returning visito
  await page.reload();await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeVisible();
  await page.getByRole('link',{name:'C Companion หน้าหลัก',exact:true}).click();await expect(page).toHaveURL(/\/welcome\/$/);
  await page.goto('/');await expect(page).toHaveURL(/\/welcome\/$/);
+});
+
+
+test('learning journey explains each step and mobile gallery changes with its controls',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/welcome/');
+ await page.getByRole('button',{name:'โหมดถัดไป'}).click();await expect(page.locator('.tutor-card h3')).toBeInViewport();
+ await page.getByRole('button',{name:'ฝึกทำโจทย์',exact:true}).click();await expect(page.locator('.quiz-card h3')).toBeInViewport();
+ await page.locator('.quiz-card a').click();await expect(page.getByRole('tab',{name:'ฝึกทำโจทย์'})).toHaveAttribute('aria-selected','true');
+ await page.getByRole('button',{name:'ถามคำถาม',exact:true}).click();await expect(page.locator('.ask-card h3')).toBeInViewport();
+ await page.getByRole('button',{name:/ค้นเนื้อหาที่เกี่ยวข้อง/}).click();await expect(page.locator('#journey-detail')).toContainText('ไม่ได้ค้นเว็บทั่วไป');
+ await page.getByRole('button',{name:/อธิบายตามโหมดที่เลือก/}).focus();await page.keyboard.press('Enter');await expect(page.locator('#journey-detail')).toContainText('บริการ AI');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
