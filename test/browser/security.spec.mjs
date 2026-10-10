@@ -51,7 +51,7 @@ test('chat creation is bounded and returns Retry-After without blocking reads or
 });
 
 test('untrusted learner Markdown cannot execute scripts or javascript links',async({page})=>{
- await page.goto('/');
+ await page.goto('/chat/');
  await page.getByRole('textbox',{name:'คำถามภาษา C'}).fill('พอยน์เตอร์ <script>window.__xss=1</script> <img src=x onerror="window.__xss=1"> [link](javascript:alert(1))');
  await page.getByRole('button',{name:'ส่งคำถาม',exact:true}).click();
  await expect(page.locator('article.assistant')).toHaveCount(1);

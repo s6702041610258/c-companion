@@ -43,7 +43,7 @@ test('English summary, clarification and provider error are localized',async({re
  }finally{await request.delete('/api/chats/'+id)}
 });
 test('mobile changes language through chat and remembers it after reload',async({page})=>{
- await page.setViewportSize({width:390,height:844});await page.goto('/');
+ await page.setViewportSize({width:390,height:844});await page.goto('/chat/');
  await expect(page.getByRole('group',{name:'ภาษาคำตอบ / Reply language'})).toHaveCount(0);
  await expect(page.getByText('พิมพ์ “ตอบเป็นอังกฤษ” หรือ “ตอบเป็นไทย” เพื่อเปลี่ยนภาษาได้เลย')).toBeVisible();
  const field=page.getByRole('textbox',{name:'คำถามภาษา C'});

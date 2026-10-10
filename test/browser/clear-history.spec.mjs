@@ -19,7 +19,7 @@ test('bulk delete is session scoped, rejects cross-site writes and refuses activ
 });
 
 test('mobile clear history can be cancelled, retains errors and removes the current conversation after confirmation',async({page})=>{
- await page.setViewportSize({width:390,height:844});await page.goto('/');
+ await page.setViewportSize({width:390,height:844});await page.goto('/chat/');
  const {id}=await (await page.request.post('/api/chats',{data:{mode:'ask'}})).json();
  await page.request.post(`/api/chats/${id}/messages`,{data:{message:'สวัสดี'}});
  await page.reload();await page.getByRole('button',{name:'เปิดเมนู',exact:true}).click();

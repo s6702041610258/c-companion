@@ -9,8 +9,8 @@ test('landing hydrates under hash-based CSP and demo tabs work with keyboard wit
  await page.keyboard.press('ArrowDown');await expect(page.getByRole('tab',{name:'ฝึกทำโจทย์'})).toBeFocused();await expect(page.getByRole('tabpanel')).toContainText('ส่งโค้ดที่ลองเขียน');
  await page.keyboard.press('Home');await expect(page.getByRole('tabpanel')).toContainText('บทที่ 4');
  expect(errors).toEqual([]);expect(writes).toEqual([]);
- const chat=await request.get('/');expect(chat.headers()['content-security-policy']).not.toContain('sha256-');
- await expect(page.getByRole('link',{name:'เริ่มเรียนภาษา C',exact:true})).toHaveAttribute('href','/');
+ const chat=await request.get('/chat/');expect(chat.headers()['content-security-policy']).not.toContain('sha256-');
+ await expect(page.getByRole('link',{name:'เริ่มเรียนภาษา C',exact:true})).toHaveAttribute('href','/chat/');
  expect((await request.head('/manual.pdf')).ok()).toBe(true);expect((await request.head('/book.pdf')).ok()).toBe(true);
 });
 
@@ -44,16 +44,35 @@ test('static landing remains readable and navigable with JavaScript disabled',as
  const context=await browser.newContext({javaScriptEnabled:false});const page=await context.newPage();
  try{await page.goto('http://127.0.0.1:18080/welcome/');await expect(page.getByRole('heading',{level:1})).toContainText('curiosity');await expect(page.locator('.chapter-item')).toHaveCount(12);
  await page.locator('summary').filter({hasText:'ต้องเขียนภาษา C เป็นก่อนหรือไม่?'}).click();await expect(page.getByText('เริ่มจากพื้นฐานได้',{exact:false})).toBeVisible();
- await page.getByRole('link',{name:'เริ่มเรียนภาษา C',exact:true}).click();await expect(page).toHaveURL('http://127.0.0.1:18080/');
+ await page.getByRole('link',{name:'เริ่มเรียนภาษา C',exact:true}).click();await expect(page).toHaveURL('http://127.0.0.1:18080/chat/');
  }finally{await context.close()}
 });
 
 test('chat entry does not load the landing animation bundle',async({page})=>{
- const landing=[];page.on('request',r=>{if(r.url().includes('/welcome/'))landing.push(r.url())});await page.goto('/');await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeVisible();expect(landing).toEqual([]);
+ const landing=[];page.on('request',r=>{if(r.url().includes('/welcome/'))landing.push(r.url())});await page.goto('/chat/');await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeVisible();expect(landing).toEqual([]);
 });
 
 test('data-saving preference starts without motion and still allows an explicit opt-in',async({page})=>{
  await page.emulateMedia({reducedMotion:'no-preference'});await page.addInitScript(()=>Object.defineProperty(navigator,'connection',{value:{saveData:true},configurable:true}));
  await page.goto('/welcome/');await expect(page.locator('html')).toHaveAttribute('data-motion','off');await expect(page.locator('#dragon-scene canvas')).toHaveCount(0);
  await page.getByRole('button',{name:'เปิดการเคลื่อนไหว',exact:true}).click();await expect(page.locator('html')).toHaveAttribute('data-motion','on');
+});
+
+
+test('home always opens Welcome before entering chat, including returning visitors',async({page,request})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
+ for(const path of ['/','/index.html','/c-tutor/','/c-tutor']){
+  const response=await request.get(path,{maxRedirects:0});
+  expect(response.status()).toBe(302);expect(response.headers().location).toBe('/welcome/');expect(response.headers()['cache-control']).toBe('no-store');
+ }
+ await page.goto('/');await expect(page).toHaveURL(/\/welcome\/$/);
+ await expect(page).toHaveTitle('C Companion — เปลี่ยนคำถาม ให้เป็นความเข้าใจ');
+ await page.getByRole('link',{name:'เริ่มเรียนภาษา C',exact:true}).click();
+ await expect(page).toHaveURL(/\/chat\/$/);await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeVisible();
+ await expect(page).toHaveTitle('C Companion — เปลี่ยนคำถาม ให้เป็นความเข้าใจ');
+ await expect(page.locator('link[rel=icon]')).toHaveAttribute('href','/welcome/icon.svg');
+ expect((await request.get('/welcome/icon.svg')).headers()['content-type']).toBe('image/svg+xml');
+ await page.reload();await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeVisible();
+ await page.getByRole('link',{name:'C Companion หน้าหลัก',exact:true}).click();await expect(page).toHaveURL(/\/welcome\/$/);
+ await page.goto('/');await expect(page).toHaveURL(/\/welcome\/$/);
 });

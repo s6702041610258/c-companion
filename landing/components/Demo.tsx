@@ -15,7 +15,7 @@ export function Demo(){
    <div className="demo-conversation" id="demo-panel" role="tabpanel" aria-labelledby={'demo-tab-'+selected} tabIndex={0}>
     <div className="demo-user">{example.prompt}</div>
     <div className="demo-answer"><div className="demo-avatar"><DragonMark/></div><div><strong className="demo-author">C Companion</strong><p>{example.reply}</p>{example.code&&<pre><span>C</span><code>{example.code}</code></pre>}<a href={'/book.pdf#page='+example.page} target="_blank" rel="noreferrer"><BookOpen size={14}/>{example.reference}</a></div></div>
-    <div className="demo-composer"><span>มีคำถามของคุณเองแล้ว?</span><a href="/" aria-label="ไปห้องแชทเพื่อถามคำถาม"><ArrowUp size={20}/></a></div>
+    <div className="demo-composer"><span>มีคำถามของคุณเองแล้ว?</span><a href="/chat/" aria-label="ไปห้องแชทเพื่อถามคำถาม"><ArrowUp size={20}/></a></div>
     <p className="demo-foot"><Check size={14}/>{example.foot}</p>
    </div>
   </div>

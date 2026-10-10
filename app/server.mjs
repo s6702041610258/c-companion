@@ -169,7 +169,8 @@ const server=http.createServer(async(req,res)=>{
  res.setHeader('Content-Security-Policy',securityPolicy);
  try{
  const url=new URL(req.url,'http://localhost');
- const path=url.pathname.replace(/^\/c-tutor(?=\/)/,'');
+ const path=url.pathname.replace(/^\/c-tutor(?=\/|$)/,'')||'/';
+ if((req.method==='GET'||req.method==='HEAD')&&['/','/index.html'].includes(path)){res.writeHead(302,{'Location':'/welcome/','Cache-Control':'no-store'});return res.end()}
  if(['/welcome','/welcome/','/welcome/index.html'].includes(path))res.setHeader('Content-Security-Policy',securityPolicy.replace("script-src 'self'","script-src 'self' "+landingHashes.join(' ')));
  if(req.method!=='GET'&&req.method!=='HEAD'){
   const origin=req.headers.origin;
@@ -223,6 +224,7 @@ const server=http.createServer(async(req,res)=>{
  if(req.method!=='GET'&&req.method!=='HEAD')throw fail(404,'ไม่พบรายการนี้');
  let file;
  if(['/welcome','/welcome/','/welcome/index.html'].includes(path))file=resolve(root,'dist/welcome/index.html');
+ else if(['/chat','/chat/'].includes(path))file=resolve(root,'dist/index.html');
  else if(path==='/book.pdf')file=resolve(root,'book/book.pdf');
  else if(path==='/manual.pdf')file=resolve(root,'คู่มือการใช้งานและติดตั้งแชทบอท.pdf');
  else {const relative=path==='/'?'index.html':path.replace(/^\/+/,'');file=resolve(root,'dist',relative);if(!file.startsWith(resolve(root,'dist')+'/'))throw fail(403,'ไม่อนุญาต')}

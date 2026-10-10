@@ -5,7 +5,7 @@ async function fixture(page,messages){
  await page.route('**/api/bootstrap',r=>r.fulfill({json:{chapters:[],chats:[chat],progress:[],configured:true}}));
  await page.route('**/api/chats?*',r=>r.fulfill({json:{chats:[chat],nextCursor:null}}));
  await page.route('**/api/chats/'+chat.id,r=>r.fulfill({json:{...chat,messages}}));
- await page.goto('/');await page.getByRole('button',{name:chat.title,exact:true}).click();
+ await page.goto('/chat/');await page.getByRole('button',{name:chat.title,exact:true}).click();
  await expect(page.locator('.message').first()).toBeVisible();
 }
 
@@ -48,7 +48,7 @@ test('reading older messages stays in place when an answer arrives; latest butto
 });
 
 test('mobile composer grows for pasted code, stays bounded and resets after clearing',async({page})=>{
- await page.setViewportSize({width:320,height:740});await page.goto('/');const input=page.getByRole('textbox',{name:'คำถามภาษา C'});const initial=await input.evaluate(e=>e.clientHeight);
+ await page.setViewportSize({width:320,height:740});await page.goto('/chat/');const input=page.getByRole('textbox',{name:'คำถามภาษา C'});const initial=await input.evaluate(e=>e.clientHeight);
  await input.fill('int value = 1;\n'.repeat(30));const grown=await input.evaluate(e=>e.clientHeight);expect(grown).toBeGreaterThan(initial);expect(grown).toBeLessThanOrEqual(160);
  await expect(page.getByRole('button',{name:'ส่งคำถาม'})).toBeInViewport();await input.fill('');expect(await input.evaluate(e=>e.clientHeight)).toBe(initial);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -63,7 +63,7 @@ test('history API only returns owned non-empty conversations and searches titles
 
 test('settings report service failure honestly and provide the shipped PDF manual',async({page})=>{
  await page.route('**/api/connection',r=>r.fulfill({json:{status:'unavailable',checkedAt:new Date().toISOString()}}));
- await page.goto('/');await page.getByRole('button',{name:'การใช้งานและคู่มือ',exact:true}).click();const modal=page.getByRole('dialog',{name:'การใช้งานและคู่มือ'});
+ await page.goto('/chat/');await page.getByRole('button',{name:'การใช้งานและคู่มือ',exact:true}).click();const modal=page.getByRole('dialog',{name:'การใช้งานและคู่มือ'});
  await expect(modal).toContainText('ยังเชื่อมต่อบริการ AI ไม่สำเร็จ');await expect(modal.getByRole('link',{name:/เปิดคู่มือ/})).toHaveAttribute('href','/manual.pdf');
  const pdf=await page.request.head('/manual.pdf');expect(pdf.ok()).toBe(true);expect(pdf.headers()['content-type']).toBe('application/pdf');
  await page.keyboard.press('Escape');await expect(modal).toHaveCount(0);await expect(page.getByRole('button',{name:'การใช้งานและคู่มือ',exact:true})).toBeFocused();
