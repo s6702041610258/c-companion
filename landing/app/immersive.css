@@ -91,3 +91,7 @@
 .scene-enter{display:flex;align-items:center;gap:10px;font-size:12px;color:#f2c2af}.hero-bottom{padding-right:150px}.hero-facts{gap:20px}
 @media(max-width:1100px) and (min-width:751px){.hero-facts{display:none}.hero-bottom{padding-right:135px}}
 @media(max-width:750px){.hero-bottom{padding-right:0}.scene-enter{display:none}.hero-art{mask-image:none}}
+/* Keep the opening and its actions inside shorter laptop windows. */
+@media(min-width:901px) and (max-height:820px){
+ html[data-motion=on] .hero{min-height:660px}.hero .hero-wordmark{top:94px;font-size:12vw}.hero-content{top:37%;width:36%}.hero-content h2{font-size:clamp(27px,2.5vw,36px);line-height:1.36}.hero-intro{margin-bottom:10px}.hero-description{font-size:13px;line-height:1.8;margin-top:12px;max-width:340px}.hero-actions{margin-top:18px;gap:12px}.hero-actions .button{min-height:46px;padding:12px 20px;font-size:13px}.hero-actions .text-link{font-size:12px}.hero-art{top:23%;height:72%}.hero-bottom{bottom:18px;padding-top:14px}.hero-facts{font-size:10px}.scene-meter{bottom:82px!important}
+}

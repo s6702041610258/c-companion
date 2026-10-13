@@ -133,3 +133,12 @@ test('cinematic scroll holds the scene, changes chapters and releases to ordinar
  await expect(page.locator('.hero')).toHaveCSS('position','relative');
  await expect(page.locator('.hero-content')).toHaveCSS('visibility','visible');
 });
+
+test('short laptop opening keeps the primary and secondary actions above the footer',async({page})=>{
+ await page.setViewportSize({width:1280,height:720});await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('/welcome/');
+ await expect(page.locator('html')).toHaveAttribute('data-motion','on');
+ const footer=await page.locator('.hero-bottom').boundingBox();
+ for(const link of await page.locator('.hero-actions a').all()){
+  await expect(link).toBeInViewport({ratio:1});const rect=await link.boundingBox();expect(rect.y+rect.height).toBeLessThan(footer.y);
+ }
+});
