@@ -112,3 +112,6 @@
 @media(max-width:370px){.hero-art{height:350px}}
 /* Anchor navigation exits the long scene immediately, including on slower GPUs. */
 html[data-motion=on]{scroll-behavior:auto}
+
+/* Names remain text as well as part of the three-dimensional gallery. */
+.scene-caption .creator-names{display:grid;grid-template-columns:repeat(3,max-content);gap:8px 22px;max-width:310px;font-size:18px;color:#ead6b3;line-height:1.8}

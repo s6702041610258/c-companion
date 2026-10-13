@@ -1,3 +1,4 @@
+import {addStudioGallery} from './studio-gallery';
 import * as THREE from 'three';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -9,7 +10,7 @@ export function createLearningScene(host:HTMLElement){
  const gl=canvas.getContext('webgl2',{alpha:false,antialias:true,powerPreference:'low-power'});if(!gl)return null;
  const renderer=new THREE.WebGLRenderer({canvas,context:gl,antialias:true});
  renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<700?1:1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;
- renderer.shadowMap.enabled=innerWidth>750;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;host.append(canvas);
+ renderer.shadowMap.enabled=innerWidth>750;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;host.append(canvas);
  const scene=new THREE.Scene();scene.background=new THREE.Color('#10121b');scene.fog=new THREE.FogExp2('#10121b',.035);
  const camera=new THREE.PerspectiveCamera(38,1,.1,70);
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment(),env=pmrem.fromScene(room,.04);room.dispose();pmrem.dispose();scene.environment=env.texture;scene.environmentIntensity=.32;
@@ -26,7 +27,7 @@ export function createLearningScene(host:HTMLElement){
  // Architectural depth: real door frames and floor inlays, not floating sheets.
  for(let i=0;i<4;i++){
   const z=-4-i*4.2;
-  box(.16,7,.2,-6,3.5,z,edge);box(.16,7,.2,6,3.5,z,edge);box(12,.16,.2,0,7,z,edge);
+  box(.16,7,.2,-8,3.5,z,edge);box(.16,7,.2,8,3.5,z,edge);box(16,.16,.2,0,7,z,edge);
   if(i===0){box(.022,.012,36,-4,0.016,-8,glow,.002);box(.022,.012,36,4,.016,-8,glow,.002);}
  }
  for(let i=0;i<12;i++)box(24,.006,.016,0,.009,3-i*2,stone,.002);
@@ -42,24 +43,42 @@ export function createLearningScene(host:HTMLElement){
  const screenTexture=new THREE.CanvasTexture(screenCanvas);screenTexture.colorSpace=THREE.SRGBColorSpace;const screenMat=new THREE.MeshBasicMaterial({map:screenTexture});materials.push(screenMat);
  const screen=new THREE.Mesh(new THREE.PlaneGeometry(1.52,.89),screenMat);screen.position.set(-2.7,2.05,-1.749);scene.add(screen);
  box(1.3,.055,.43,-2.7,1.38,-1.02,dark);for(let row=0;row<3;row++)for(let col=0;col<10;col++)box(.09,.018,.07,-3.25+col*.12,1.415,-1.16+row*.1,stone,.007);
+ // Workstation details: desk mat, mouse, screen camera and fine chassis seams.
+ box(2.15,.016,.78,-2.7,1.343,-1.02,material('#29252a',.97),.08);
+ box(.28,.075,.42,-1.86,1.4,-.98,dark,.035);
+ box(.012,.008,.1,-1.86,1.442,-1.03,edge,.003);
+ box(.035,.035,.014,-2.7,2.515,-1.749,dark,.01);
+ box(.05,.008,.014,-2.09,1.546,-1.75,glow,.002);
+ box(.055,1.12,.08,-3.92,.67,-1.94,wood);
+ box(.055,1.12,.08,-1.66,.67,-1.94,wood);
+ // A cable runs behind the monitor, away from the working surface.
+ const cablePath=new THREE.CatmullRomCurve3([new THREE.Vector3(-2.7,1.9,-1.87),new THREE.Vector3(-2.8,1.5,-1.99),new THREE.Vector3(-3,1.2,-2.12),new THREE.Vector3(-3,.25,-2.12)]);
+ scene.add(new THREE.Mesh(new THREE.TubeGeometry(cablePath,16,.018,6,false),dark));
+ // Fine wood grain on the desk keeps detail in a single lightweight texture.
+ const grainCanvas=document.createElement('canvas');grainCanvas.width=512;grainCanvas.height=128;const grain=grainCanvas.getContext('2d')!;
+ grain.fillStyle='#654333';grain.fillRect(0,0,512,128);
+ for(let i=0;i<90;i++){grain.strokeStyle=i%3?'rgba(30,14,9,.12)':'rgba(226,179,120,.13)';grain.lineWidth=.5;grain.beginPath();for(let x=0;x<=512;x+=8){const y=i*1.5+Math.sin(x*.025+i)*1.3;if(x===0)grain.moveTo(x,y);else grain.lineTo(x,y)}grain.stroke()}
+ const grainTexture=new THREE.CanvasTexture(grainCanvas);grainTexture.colorSpace=THREE.SRGBColorSpace;wood.map=grainTexture;wood.color.set('#ffffff');wood.needsUpdate=true;
+ // Recessed wall panels and skirting ground the gallery in a finished room.
+ box(20,7,.14,0,3.5,-7,material('#252631',.94));
+ box(20,.13,.2,0,.09,-6.88,edge);
+ for(const x of [-7,-3,1,7])box(.035,6.8,.03,x,3.5,-6.9,stone);
  // Warm reading lamp, a few tangible books, and a small plant.
  box(.38,.04,.3,-4,1.36,-1.5,edge);box(.045,.72,.045,-4,1.73,-1.5,edge);const shade=new THREE.Mesh(new THREE.ConeGeometry(.28,.22,32,1,true),edge);shade.position.set(-4,2.15,-1.5);scene.add(shade);const lamp=new THREE.PointLight(0xffbe7e,4,3);lamp.position.set(-4,2.04,-1.5);scene.add(lamp);
  for(let i=0;i<3;i++){box(.62,.13,.9,-1.8,1.42+i*.14,-1.35,i%2?red:paper).rotation.y=.15*i}
  const pot=new THREE.Mesh(new THREE.CylinderGeometry(.25,.18,.38,24),wood);pot.position.set(-4.7,.2,-.4);scene.add(pot);
  for(let i=0;i<7;i++){const leaf=new THREE.Mesh(new THREE.SphereGeometry(1,16,10),material('#54664e'));leaf.scale.set(.08,.35,.045);leaf.position.set(-4.7+Math.sin(i*2.4)*.2,.55+Math.cos(i)*.12,-.4+Math.cos(i*2.4)*.18);leaf.rotation.z=Math.sin(i*2.4)*.7;scene.add(leaf)}
- // Backlit circular wall aperture and shelves.
+ // Backlit aperture and portrait gallery.
  const disc=new THREE.Mesh(new THREE.CircleGeometry(3,80),new THREE.MeshBasicMaterial({color:'#7e2d2a'}));disc.position.set(3,3.7,-6);scene.add(disc);
  const halo=new THREE.Mesh(new THREE.TorusGeometry(3.04,.025,8,100),glow);halo.position.copy(disc.position);scene.add(halo);
- for(let i=0;i<3;i++)box(4.3,.12,.85,3.8,1+i*1.45,-4.5,wood);
- for(const x of [1.6,6])box(.09,4.6,.8,x,2.35,-4.5,edge);
  let width=1,height=1,progress=0,px=0,py=0,visible=true,disposed=false,frame=0;
  const controller=new AbortController(),loader=new GLTFLoader();
  function disposeTree(object:THREE.Object3D){const geometry=new Set<THREE.BufferGeometry>(),mats=new Set<THREE.Material>(),textures=new Set<THREE.Texture>();object.traverse(o=>{if(o instanceof THREE.Mesh){geometry.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])mats.add(m)}});mats.forEach(m=>{for(const value of Object.values(m))if(value instanceof THREE.Texture)textures.add(value);m.dispose()});geometry.forEach(g=>g.dispose());textures.forEach(t=>t.dispose())}
  async function loadModel(name:string){const response=await fetch(`/welcome/models/${name}`,{signal:controller.signal});if(!response.ok)throw new Error('Model unavailable');const model=await loader.parseAsync(await response.arrayBuffer(),'/welcome/models/');if(disposed){disposeTree(model.scene);return null}return model.scene}
  void loadModel('mongkoi-giraffe.glb').then(model=>{if(!model)return;model.position.set(1.7,.17,0);model.rotation.y=-.08;model.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true}});scene.add(model);renderer.shadowMap.needsUpdate=true;host.classList.add('scene-ready');schedule()}).catch(()=>host.classList.remove('scene-ready'));
- if(innerWidth>750)void loadModel('library-books.gltf').then(model=>{if(!model)return;model.rotation.y=0;model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());const scale=Math.min(3.4/size.x,1.12/size.y,.65/size.z);model.scale.setScalar(scale);const center=bounds.getCenter(new THREE.Vector3());model.position.set(3.8-center.x*scale,1.08-bounds.min.y*scale,-4.4-center.z*scale);model.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true}});scene.add(model);for(let i=1;i<3;i++){const clone=model.clone();clone.position.y+=i*1.45;scene.add(clone)}renderer.shadowMap.needsUpdate=true;schedule()}).catch(()=>{});
- const path=new THREE.CatmullRomCurve3([new THREE.Vector3(4.5,3.5,9),new THREE.Vector3(0,2.7,7.8),new THREE.Vector3(-1.5,2.8,6),new THREE.Vector3(4.5,3.3,6.8)],false,'catmullrom',.4);
- const focus=new THREE.CatmullRomCurve3([new THREE.Vector3(-.6,1.8,0),new THREE.Vector3(-.7,1.8,-.6),new THREE.Vector3(.15,1.9,0),new THREE.Vector3(.55,1.9,0)]);
+ const disposeGallery=addStudioGallery(scene,()=>{renderer.shadowMap.needsUpdate=true;schedule()});
+ const path=new THREE.CatmullRomCurve3([new THREE.Vector3(4.5,3.5,9),new THREE.Vector3(0,2.7,7.8),new THREE.Vector3(6.5,3.6,6.8),new THREE.Vector3(7,3.6,5.5)],false,'catmullrom',.4);
+ const focus=new THREE.CatmullRomCurve3([new THREE.Vector3(-.6,1.8,0),new THREE.Vector3(-.7,1.8,-.6),new THREE.Vector3(1.9,2.3,-2.5),new THREE.Vector3(2.6,2.6,-3.4)]);
  const position=new THREE.Vector3(),target=new THREE.Vector3();
  function render(){frame=0;if(disposed||!visible||document.hidden)return;path.getPoint(progress,position);focus.getPoint(progress,target);const mobile=width<751;
   if(mobile){position.set(3.5-progress*2,3,10);target.set(1.5,1.95,0);camera.fov=40}else camera.fov=38-Math.sin(progress*Math.PI)*2;
@@ -69,5 +88,5 @@ export function createLearningScene(host:HTMLElement){
  const observer=new ResizeObserver(resize);observer.observe(host);const intersection=new IntersectionObserver(([e])=>{visible=e.isIntersecting;if(visible)schedule()});intersection.observe(host);
  function visibility(){if(!document.hidden)schedule()}document.addEventListener('visibilitychange',visibility);
  const lost=(e:Event)=>{e.preventDefault();host.classList.remove('scene-ready')};canvas.addEventListener('webglcontextlost',lost);resize();
- return {setProgress(value:number){progress=Math.max(0,Math.min(1,value));schedule()},setPointer(x:number,y:number){px=x;py=y;schedule()},dispose(){disposed=true;controller.abort();cancelAnimationFrame(frame);observer.disconnect();intersection.disconnect();document.removeEventListener('visibilitychange',visibility);canvas.removeEventListener('webglcontextlost',lost);disposeTree(scene);env.dispose();renderer.dispose();renderer.forceContextLoss();canvas.remove();host.classList.remove('scene-ready')}};
+ return {setProgress(value:number){progress=Math.max(0,Math.min(1,value));schedule()},setPointer(x:number,y:number){px=x;py=y;schedule()},dispose(){disposed=true;controller.abort();cancelAnimationFrame(frame);observer.disconnect();intersection.disconnect();document.removeEventListener('visibilitychange',visibility);canvas.removeEventListener('webglcontextlost',lost);disposeGallery();disposeTree(scene);env.dispose();renderer.dispose();renderer.forceContextLoss();canvas.remove();host.classList.remove('scene-ready')}};
 }
