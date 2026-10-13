@@ -10,7 +10,7 @@ export function createLearningScene(host:HTMLElement){
  const gl=canvas.getContext('webgl2',{alpha:false,antialias:true,powerPreference:'low-power'});if(!gl)return null;
  const renderer=new THREE.WebGLRenderer({canvas,context:gl,antialias:true});
  renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<700?1:1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;
- renderer.shadowMap.enabled=innerWidth>750;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;host.append(canvas);
+ renderer.shadowMap.enabled=innerWidth>750;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;host.append(canvas);
  const scene=new THREE.Scene();scene.background=new THREE.Color('#10121b');scene.fog=new THREE.FogExp2('#10121b',.035);
  const camera=new THREE.PerspectiveCamera(38,1,.1,70);
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment(),env=pmrem.fromScene(room,.04);room.dispose();pmrem.dispose();scene.environment=env.texture;scene.environmentIntensity=.32;
@@ -68,6 +68,11 @@ export function createLearningScene(host:HTMLElement){
  for(let i=0;i<3;i++){box(.62,.13,.9,-1.8,1.42+i*.14,-1.35,i%2?red:paper).rotation.y=.15*i}
  const pot=new THREE.Mesh(new THREE.CylinderGeometry(.25,.18,.38,24),wood);pot.position.set(-4.7,.2,-.4);scene.add(pot);
  for(let i=0;i<7;i++){const leaf=new THREE.Mesh(new THREE.SphereGeometry(1,16,10),material('#54664e'));leaf.scale.set(.08,.35,.045);leaf.position.set(-4.7+Math.sin(i*2.4)*.2,.55+Math.cos(i)*.12,-.4+Math.cos(i*2.4)*.18);leaf.rotation.z=Math.sin(i*2.4)*.7;scene.add(leaf)}
+ // A dedicated reading plinth presents the source book during the middle camera pass.
+ box(1.78,.13,.78,-.55,.89,-2.45,stone,.04);
+ box(.48,.77,.4,-.55,.44,-2.48,dark,.04);
+ box(.95,.07,.7,-.55,.05,-2.48,edge,.025);
+ box(1.55,.014,.018,-.55,.955,-2.08,edge,.003);
  // Backlit aperture and portrait gallery.
  const disc=new THREE.Mesh(new THREE.CircleGeometry(3,80),new THREE.MeshBasicMaterial({color:'#7e2d2a'}));disc.position.set(3,3.7,-6);scene.add(disc);
  const halo=new THREE.Mesh(new THREE.TorusGeometry(3.04,.025,8,100),glow);halo.position.copy(disc.position);scene.add(halo);
@@ -76,9 +81,10 @@ export function createLearningScene(host:HTMLElement){
  function disposeTree(object:THREE.Object3D){const geometry=new Set<THREE.BufferGeometry>(),mats=new Set<THREE.Material>(),textures=new Set<THREE.Texture>();object.traverse(o=>{if(o instanceof THREE.Mesh){geometry.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])mats.add(m)}});mats.forEach(m=>{for(const value of Object.values(m))if(value instanceof THREE.Texture)textures.add(value);m.dispose()});geometry.forEach(g=>g.dispose());textures.forEach(t=>t.dispose())}
  async function loadModel(name:string){const response=await fetch(`/welcome/models/${name}`,{signal:controller.signal});if(!response.ok)throw new Error('Model unavailable');const model=await loader.parseAsync(await response.arrayBuffer(),'/welcome/models/');if(disposed){disposeTree(model.scene);return null}return model.scene}
  void loadModel('mongkoi-giraffe.glb').then(model=>{if(!model)return;model.position.set(1.7,.17,0);model.rotation.y=-.08;model.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true}});scene.add(model);renderer.shadowMap.needsUpdate=true;host.classList.add('scene-ready');schedule()}).catch(()=>host.classList.remove('scene-ready'));
+ void loadModel('c-companion-book.gltf').then(model=>{if(!model)return;model.name='C Companion source book';model.position.set(-.55,.96,-2.45);model.rotation.y=.12;model.scale.setScalar(1.05);model.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true}});scene.add(model);renderer.shadowMap.needsUpdate=true;schedule()}).catch(()=>{/* The rest of the studio remains usable if this decorative asset cannot load. */});
  const disposeGallery=addStudioGallery(scene,()=>{renderer.shadowMap.needsUpdate=true;schedule()});
- const path=new THREE.CatmullRomCurve3([new THREE.Vector3(4.5,3.5,9),new THREE.Vector3(0,2.7,7.8),new THREE.Vector3(6.5,3.6,6.8),new THREE.Vector3(7,3.6,5.5)],false,'catmullrom',.4);
- const focus=new THREE.CatmullRomCurve3([new THREE.Vector3(-.6,1.8,0),new THREE.Vector3(-.7,1.8,-.6),new THREE.Vector3(1.9,2.3,-2.5),new THREE.Vector3(2.6,2.6,-3.4)]);
+ const path=new THREE.CatmullRomCurve3([new THREE.Vector3(4.5,3.5,9),new THREE.Vector3(-.8,2.8,6.8),new THREE.Vector3(6.5,3.6,6.8),new THREE.Vector3(7,3.6,5.5)],false,'catmullrom',.4);
+ const focus=new THREE.CatmullRomCurve3([new THREE.Vector3(-.6,1.8,0),new THREE.Vector3(-.95,2,-1.7),new THREE.Vector3(1.9,2.3,-2.5),new THREE.Vector3(2.6,2.6,-3.4)]);
  const position=new THREE.Vector3(),target=new THREE.Vector3();
  function render(){frame=0;if(disposed||!visible||document.hidden)return;path.getPoint(progress,position);focus.getPoint(progress,target);const mobile=width<751;
   if(mobile){position.set(3.5-progress*2,3,10);target.set(1.5,1.95,0);camera.fov=40}else camera.fov=38-Math.sin(progress*Math.PI)*2;

@@ -23,7 +23,7 @@ export function Experience(){
     // Explicit duration keeps the scroll rig and copy on the same 0–1 clock.
     timeline.to('.scene-meter i',{scaleX:1,duration:1,ease:'none'},0);
     gsap.to('.red-moon',{x:-130,y:100,scale:1.25,ease:'none',scrollTrigger:{trigger:'.cinematic-stage',start:'top top',end:'bottom bottom',scrub:1}});
-    gsap.fromTo('.book-object',{rotateY:-28,rotateZ:-9},{rotateY:12,rotateZ:3,ease:'none',scrollTrigger:{trigger:'.book-intro',start:'top bottom',end:'bottom top',scrub:1}});
+    gsap.fromTo('.book-object',{y:18,rotateZ:-3},{y:-12,rotateZ:1,ease:'none',scrollTrigger:{trigger:'.book-intro',start:'top bottom',end:'bottom top',scrub:1}});
    });
    const hero=document.querySelector<HTMLElement>('.hero-art')!,host=document.getElementById('learning-scene')!;
    let scene:ReturnType<typeof import('./learning-scene').createLearningScene>|null=null;

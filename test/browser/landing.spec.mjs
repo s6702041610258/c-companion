@@ -154,7 +154,7 @@ test('Mongkoi model loads in a full-viewport scene and cleans up when motion sto
  const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
  expect(gltf.nodes.some(n=>n.name==='Thai chest embroidery')).toBe(true);expect(gltf.nodes.some(n=>n.name==='Cube')).toBe(false);
  const portraitIds=['duj-tawan','suphasan','thanadon','mongkol','pokpong'];
- const textureLoaded=Promise.all(portraitIds.map(id=>page.waitForResponse(r=>r.url().endsWith('/portraits/'+id+'.webp')&&r.ok())));
+ const textureLoaded=Promise.all([...portraitIds.map(id=>page.waitForResponse(r=>r.url().endsWith('/portraits/'+id+'.webp')&&r.ok())),page.waitForResponse(r=>r.url().endsWith('/models/c-companion-book.gltf')&&r.ok()),page.waitForResponse(r=>r.url().endsWith('/models/book-textures/cover.jpg')&&r.ok())]);
  const textureErrors=[];page.on('console',m=>{if(m.type()==='error'&&m.text().includes('texture'))textureErrors.push(m.text())});
  await page.goto('/welcome/');await textureLoaded;await expect(page.locator('#learning-scene')).toHaveClass('scene-ready',{timeout:20000});
  expect(textureErrors).toEqual([]);
