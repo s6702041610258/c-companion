@@ -10,7 +10,7 @@ test('landing hydrates under hash-based CSP and demo tabs work with keyboard wit
  await page.keyboard.press('Home');await expect(page.getByRole('tabpanel')).toContainText('บทที่ 4');
  expect(errors).toEqual([]);expect(writes).toEqual([]);
  const chat=await request.get('/chat/');expect(chat.headers()['content-security-policy']).not.toContain('sha256-');
- await expect(page.getByRole('link',{name:'เริ่มเรียนภาษา C',exact:true})).toHaveAttribute('href','/chat/');
+ await expect(page.locator('.hero').getByRole('link',{name:'เริ่มคุยกับ C Companion',exact:true})).toHaveAttribute('href','/chat/');
  expect((await request.head('/manual.pdf')).ok()).toBe(true);expect((await request.head('/book.pdf')).ok()).toBe(true);
 });
 
@@ -46,9 +46,9 @@ test('WebGL failure keeps the illustrated fallback, usable links and working exa
 
 test('static landing remains readable and navigable with JavaScript disabled',async({browser})=>{
  const context=await browser.newContext({javaScriptEnabled:false});const page=await context.newPage();
- try{await page.goto('http://127.0.0.1:18080/welcome/');await expect(page.getByRole('heading',{level:1})).toContainText('เข้าใจภาษา C');await expect(page.locator('.chapter-item')).toHaveCount(12);
+ try{await page.goto('http://127.0.0.1:18080/welcome/');await expect(page.getByRole('heading',{level:1})).toContainText('COMPANION');await expect(page.locator('.chapter-item')).toHaveCount(12);
  await page.locator('summary').filter({hasText:'ต้องเขียนภาษา C เป็นก่อนหรือไม่?'}).click();await expect(page.getByText('เริ่มจากพื้นฐานได้',{exact:false})).toBeVisible();
- await page.getByRole('link',{name:'เริ่มเรียนภาษา C',exact:true}).click();await expect(page).toHaveURL('http://127.0.0.1:18080/chat/');
+ await page.locator('.hero').getByRole('link',{name:'เริ่มคุยกับ C Companion',exact:true}).click();await expect(page).toHaveURL('http://127.0.0.1:18080/chat/');
  }finally{await context.close()}
 });
 
@@ -71,7 +71,7 @@ test('home always opens Welcome before entering chat, including returning visito
  }
  await page.goto('/');await expect(page).toHaveURL(/\/welcome\/$/);
  await expect(page).toHaveTitle('C Companion — เปลี่ยนคำถาม ให้เป็นความเข้าใจ');
- await page.getByRole('link',{name:'เริ่มเรียนภาษา C',exact:true}).click();
+ await page.locator('.hero').getByRole('link',{name:'เริ่มคุยกับ C Companion',exact:true}).click();
  await expect(page).toHaveURL(/\/chat\/$/);await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeVisible();
  await expect(page).toHaveTitle('C Companion — เปลี่ยนคำถาม ให้เป็นความเข้าใจ');
  await expect(page.locator('link[rel=icon]')).toHaveAttribute('href','/welcome/icon.svg');
@@ -91,4 +91,16 @@ test('learning journey explains each step and mobile gallery changes with its co
  await page.getByRole('button',{name:/ค้นเนื้อหาที่เกี่ยวข้อง/}).click();await expect(page.locator('#journey-detail')).toContainText('ไม่ได้ค้นเว็บทั่วไป');
  await page.getByRole('button',{name:/อธิบายตามโหมดที่เลือก/}).focus();await page.keyboard.press('Enter');await expect(page.locator('#journey-detail')).toContainText('บริการ AI');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('oversized brand fits narrow and desktop screens and chat opens without scene loading',async({page})=>{
+ await page.route('**/*',route=>{const r=route.request();if(r.resourceType()==='script'&&r.url().includes('/welcome/_next/'))return route.abort();return route.continue()});
+ for(const width of [320,390,768,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/welcome/');
+  await expect(page.getByRole('heading',{name:'C COMPANION',exact:true})).toBeVisible();
+  const bounds=await page.locator('#hero-title').boundingBox();expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.x+bounds.width).toBeLessThanOrEqual(width+1);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await expect(page.locator('.site-header .header-cta')).toBeInViewport();
+ }
+ await page.locator('.site-header .header-cta').click();await expect(page).toHaveURL(/\/chat\/$/);
 });

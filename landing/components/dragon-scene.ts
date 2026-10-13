@@ -50,12 +50,23 @@ export function createDragonScene(host:HTMLElement){
  const paper=new THREE.MeshStandardMaterial({color:0xf1e5c8,roughness:.7});
  for(const side of [-1,1]){const half=new THREE.Group();half.position.x=side*.34;half.rotation.y=side*.18;book.add(half);const cover=new THREE.Mesh(new THREE.BoxGeometry(.67,.74,.06),deep);half.add(cover);const pages=new THREE.Mesh(new THREE.BoxGeometry(.59,.65,.065),paper);pages.position.z=.048;half.add(pages);
   for(let n=0;n<5;n++){const line=new THREE.Mesh(new THREE.BoxGeometry(n===4?.25:.39,.012,.008),jade);line.position.set(0,.2-n*.075,.087);half.add(line)}}
- const ringMat=new THREE.MeshPhysicalMaterial({color:0x74c8b8,metalness:.88,roughness:.19,clearcoat:1,emissive:0x102f29,emissiveIntensity:.3});
- const ring=new THREE.Mesh(new THREE.TorusGeometry(2.05,.075,20,160,Math.PI*1.68),ringMat);ring.rotation.set(.27,-.4,.46);ring.position.z=-.6;sculpture.add(ring);
- const inner=new THREE.Mesh(new THREE.TorusGeometry(2.18,.012,8,128,Math.PI*1.6),new THREE.MeshBasicMaterial({color:0x82b9ca,transparent:true,opacity:.6}));inner.rotation.set(.27,-.4,.46);inner.position.z=-.6;sculpture.add(inner);
- const base=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.17,.075,64),new THREE.MeshPhysicalMaterial({color:0x395e62,metalness:.8,roughness:.25,transparent:true,opacity:.65}));base.position.set(0,-1.56,0);sculpture.add(base);
+ // A book-shaped landscape: the mascot sits on an open C textbook.
+ dragon.scale.setScalar(.76);dragon.position.set(.3,.12,0);
+ const landscape=new THREE.Group();landscape.position.set(0,-1.1,0);landscape.rotation.y=-.12;sculpture.add(landscape);
+ const pageMaterial=new THREE.MeshStandardMaterial({color:0xf7f7e8,roughness:.8});
+ const coverMaterial=new THREE.MeshPhysicalMaterial({color:0x23634d,roughness:.42,clearcoat:.35});
+ const inkMaterial=new THREE.MeshStandardMaterial({color:0x83a38c,roughness:.8});
+ for(const side of [-1,1]){
+  const leaf=new THREE.Group();leaf.position.x=side*.93;leaf.rotation.z=side*.11;landscape.add(leaf);
+  const cover=new THREE.Mesh(new THREE.BoxGeometry(1.92,.09,2.15),coverMaterial);leaf.add(cover);
+  const stack=new THREE.Mesh(new THREE.BoxGeometry(1.82,.16,2.04),pageMaterial);stack.position.y=.115;leaf.add(stack);
+  for(let line=0;line<7;line++){const mesh=new THREE.Mesh(new THREE.BoxGeometry(line%3===0?.74:1.25,.008,.027),inkMaterial);mesh.position.set(-.1,.2,-.7+line*.17);leaf.add(mesh)}
+  for(let page=0;page<4;page++){const seam=new THREE.Mesh(new THREE.BoxGeometry(1.82,.006,.007),inkMaterial);seam.position.set(0,.06+page*.033,1.024);leaf.add(seam)}
+ }
+ const ribbon=new THREE.Mesh(new THREE.BoxGeometry(.14,.012,1.48),new THREE.MeshStandardMaterial({color:0xd4a447}));ribbon.position.set(.2,.18,.65);landscape.add(ribbon);
+ const ground=new THREE.Mesh(new THREE.CircleGeometry(3.1,64),new THREE.MeshBasicMaterial({color:0xa4cdb4,transparent:true,opacity:.18,depthWrite:false}));ground.rotation.x=-Math.PI/2;ground.position.y=-1.46;sculpture.add(ground);
  let width=1,height=1,progress=0,px=0,py=0,visible=true,disposed=false,frame=0;
- function render(){frame=0;if(disposed||!visible||document.hidden)return;const mobile=width<500;camera.position.set(progress*.5,progress*.25,(mobile?9.7:8.6)-Math.sin(progress*Math.PI)*2.1);camera.lookAt(0,.05,0);sculpture.rotation.y=-.18+px*.28+progress*.9;sculpture.rotation.x=py*.1;sculpture.position.y=.1-progress*.26;ring.rotation.z=.46+progress*.45;renderer.render(scene,camera)}
+ function render(){frame=0;if(disposed||!visible||document.hidden)return;const mobile=width<500;camera.position.set(progress*.6,2.05+progress*.65,(mobile?9.8:8.8)-Math.sin(progress*Math.PI)*1.1);camera.lookAt(0,-.05,0);sculpture.rotation.y=-.18+px*.28+progress*.9;sculpture.rotation.x=py*.1;sculpture.position.y=.1-progress*.26;landscape.rotation.y=-.12+progress*.16;renderer.render(scene,camera)}
  function schedule(){if(!frame&&!disposed)frame=requestAnimationFrame(render)}
  function resize(){width=host.clientWidth;height=host.clientHeight;if(!width||!height)return;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();schedule()}
  const observer=new ResizeObserver(resize);observer.observe(host);

@@ -16,7 +16,7 @@ export function Experience(){
    mm.add('(min-width: 901px)',()=>{
     const hero=document.querySelector('.hero')!;
     gsap.to('.hero-content',{y:-35,ease:'none',scrollTrigger:{trigger:hero,start:'top top',end:'bottom 20%',scrub:true}});
-    gsap.to('.glass-note',{y:-90,rotation:3,ease:'none',scrollTrigger:{trigger:hero,start:'top top',end:'bottom top',scrub:1}});
+    gsap.to('.hero-wordmark',{y:110,scale:.96,ease:'none',scrollTrigger:{trigger:hero,start:'top top',end:'bottom top',scrub:1}});
     gsap.fromTo('.book-object',{rotateY:-28,rotateZ:-9},{rotateY:-8,rotateZ:0,ease:'none',scrollTrigger:{trigger:'.book-intro',start:'top bottom',end:'bottom top',scrub:1}});
 
    });
