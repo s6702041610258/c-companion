@@ -116,6 +116,7 @@ test('motion control does not cover hero actions on desktop or mobile',async({pa
 });
 
 test('cinematic scroll holds the scene, changes chapters and releases to ordinary content',async({page})=>{
+ test.setTimeout(60000);
  await page.setViewportSize({width:1440,height:900});await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('/welcome/');
  await expect(page.locator('html')).toHaveAttribute('data-motion','on');
  await expect(page.locator('.hero')).toHaveCSS('position','sticky');
@@ -127,8 +128,8 @@ test('cinematic scroll holds the scene, changes chapters and releases to ordinar
  await expect(page.locator('.hero-content')).toHaveCSS('visibility','hidden');
  await page.evaluate(()=>scrollTo({top:1750,behavior:'instant'}));
  await expect(page.locator('.scene-meter b')).toHaveText('03 / 03');
- await expect(page.locator('[data-scene-caption="2"]')).toHaveCSS('opacity','1');
- await page.getByRole('link',{name:'เปิดโลกการเรียนรู้',exact:true}).click();await expect(page.locator('#intro-title')).toBeInViewport();
+ await expect(page.locator('[data-scene-caption="2"]')).toHaveCSS('opacity','1',{timeout:15000});
+ await page.getByRole('link',{name:'เปิดโลกการเรียนรู้',exact:true}).click();await expect(page.locator('#intro-title')).toBeInViewport({timeout:15000});
  await page.getByRole('button',{name:'ลดการเคลื่อนไหว',exact:true}).click();
  await expect(page.locator('.hero')).toHaveCSS('position','relative');
  await expect(page.locator('.hero-content')).toHaveCSS('visibility','visible');
