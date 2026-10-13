@@ -17,6 +17,7 @@ import './style.css';
 import './theme.css';
 import './conversation.css';
 import './polish.css';
+import './workspace.css';
 type Chapter={id:number,title:string,subtitle:string,start:number,end:number};
 type Source={page:number,pdfPage:number,chapter:number,title:string,excerpt:string,before?:string,matchedText?:string,after?:string};
 type Message={id?:number,role:'user'|'assistant',content:string,sources:Source[],replyLanguage?:ReplyLanguage};
@@ -46,7 +47,7 @@ function App(){
  const busy=answerBusy;
  const [queueStage,setQueueStage]=useState('');
  const pendingJob=useRef<string|null>(null);
- const references=useSources(messages,chatId,following.current);
+ const references=useSources(messages,chatId,false);
  const selected=chapters.find(c=>c.id===chapter),label=selected?.title||'ทุกบทเรียน';
  useEffect(()=>{document.documentElement.dataset.theme=theme;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#0d1014':'#147d70')},[theme]);
  function toggleTheme(){setTheme(current=>{const next=current==='dark'?'light':'dark';try{localStorage.setItem(themeKey,next)}catch{}return next})}
@@ -61,13 +62,13 @@ function App(){
  useEffect(()=>{
   const dialog=document.querySelector<HTMLElement>('.modal-overlay:last-of-type .modal');
   if(!dialog)return;
-  const background=Array.from(document.querySelectorAll<HTMLElement>('.app > .main,.app > .sidebar'));background.forEach(e=>e.inert=true);
+  const background=Array.from(document.querySelectorAll<HTMLElement>('.app > .main,.app > .sidebar'));const previousInert=background.map(e=>e.inert);background.forEach(e=>e.inert=true);
   const previous=document.activeElement as HTMLElement;
   const focusables=()=>Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input,textarea,iframe,[tabindex="0"]'));
   const timer=setTimeout(()=>focusables()[0]?.focus(),0);
   const trap=(e:KeyboardEvent)=>{if(e.key!=='Tab')return;const elements=focusables();const first=elements[0],last=elements.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}};
   document.addEventListener('keydown',trap);
-  return()=>{clearTimeout(timer);background.forEach(e=>e.inert=false);document.removeEventListener('keydown',trap);const box=previous?.getBoundingClientRect();if(box&&box.width>0&&box.left>=0)previous.focus({preventScroll:true});else document.querySelector<HTMLButtonElement>('.mobile-menu')?.focus({preventScroll:true})};
+  return()=>{clearTimeout(timer);background.forEach((e,i)=>e.inert=previousInert[i]);document.removeEventListener('keydown',trap);const box=previous?.getBoundingClientRect();if(box&&box.width>0&&box.left>=0)previous.focus({preventScroll:true});else document.querySelector<HTMLButtonElement>('.mobile-menu')?.focus({preventScroll:true})};
  },[library,bookPage,deleting,settings,nextMode]);
  function reset(ch=chapter,nextMode=mode){if(busy)return;following.current=true;setAway(false);setUnread(false);setChapter(ch);setMode(nextMode);setChatId(null);setMessages([]);setReplyLanguage(preferredReplyLanguage());setDraft('');setError('');setSidebar(false);setLibrary(false);setTimeout(()=>{if(!document.querySelector('.source-panel[role=dialog]:not([hidden])')&&!document.querySelector('.modal-overlay'))input.current?.focus({preventScroll:true})},50)}
  async function openChat(chat:Chat){if(busy)return;setError('');setBusy(true);try{const c=await api('chats/'+chat.id);following.current=true;setUnread(false);setDraft('');setChatId(c.id);setChapter(c.chapter);setMode(c.mode);setReplyLanguage(c.replyLanguage||'th');setMessages(c.messages);setSidebar(false)}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
@@ -115,16 +116,12 @@ function App(){
   <aside id="main-navigation" aria-label="เมนูหลัก" className={'sidebar '+(sidebar?'is-open':'')}>
    <a className="brand" href={base} aria-label="C Companion หน้าหลัก"><span className="brand-mark"><BotAvatar/></span><span>C Companion<small>เพื่อนติวภาษา C ของคุณ</small></span></a>
    <button className="new-chat" onClick={()=>reset(0)} disabled={busy}><Plus size={18}/>เริ่มบทสนทนาใหม่</button>
-   <div className="nav-caption">พื้นที่การเรียนรู้</div>
-   <button className={'nav-item '+(!library?'active':'')} onClick={()=>setLibrary(false)}><MessageCircle size={18}/>ห้องติว<span className="nav-dot"/></button>
-   <button className="nav-item" onClick={()=>{setLibrary(true);setSidebar(false)}}><BookOpen size={18}/>บทเรียนทั้งหมด<span className="count">12</span></button>
    <div className="history-heading"><span><History size={15}/> บทสนทนาล่าสุด</span><span>{chats.length}</span></div>
    {chats.length>0&&<button className="clear-history" disabled={busy} onClick={()=>{setDeleteError('');setDeleting('all')}}><Trash2 size={14}/>ลบประวัติทั้งหมด</button>}
    <HistoryList initial={chats} active={chatId} busy={busy} onOpen={openChat} onDelete={c=>{setDeleteError('');setDeleting(c)}} base={base}/>
 
-   <div className="sidebar-book"><div className="little-book"><span>C</span><i>COMPANION</i></div><div><strong>เรียนจากหนังสือเล่มเดียวกัน</strong><p>12 บท · 113 หน้า PDF</p><button onClick={()=>setBookPage(1)}>เปิดหนังสือ <ArrowUpRight size={14}/></button></div></div>
    <button className="nav-item settings-nav" onClick={()=>{setSettings(true);setSidebar(false)}}><Settings size={18}/>การใช้งานและคู่มือ</button>
-   <ReportLink className="nav-item report-nav" onClick={()=>setSidebar(false)}/><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.10.0</span></div>
+   <ReportLink className="nav-item report-nav" onClick={()=>setSidebar(false)}/><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.11.0</span></div>
   </aside>
   <main className="main" id="chat-main" tabIndex={-1}>
    <header className="topbar"><div className="breadcrumb"><button className="icon-button desktop-collapse" aria-label={collapsed?'ขยายเมนู':'ย่อเมนู'} aria-expanded={!collapsed} aria-controls="main-navigation" onClick={()=>setCollapsed(!collapsed)}>{collapsed?<PanelLeftOpen size={20}/>:<PanelLeftClose size={20}/>}</button><button className="icon-button mobile-menu" aria-label="เปิดเมนู" aria-expanded={sidebar} aria-controls="main-navigation" onClick={()=>setSidebar(true)}><Menu size={20}/></button><span className="desktop-icon header-portrait"><BotAvatar/></span><span className="room-label">ห้องติว</span><ChevronRight size={14}/><button onClick={()=>setLibrary(true)}>{label}</button></div><div className="topbar-actions"><SourcesButton panel={references}/><button className="book-button" aria-label="เปิดหนังสือ" onClick={()=>setBookPage(selected?selected.start+5:1)}><BookOpen size={16}/><span>เปิดหนังสือ</span></button><button className="theme-toggle" type="button" aria-label={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} title={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} onClick={toggleTheme}>{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}<span>{theme==='dark'?'โหมดสว่าง':'โหมดมืด'}</span></button></div></header>
@@ -132,24 +129,19 @@ function App(){
     <section className="learning">
      <div className="chat-scroll" ref={scroll} onScroll={trackScroll}>
       {messages.length===0?<div className="welcome">
-       <div className="welcome-intro"><div className="welcome-copy">
-        <div className="welcome-eyebrow"><span className="status-dot"/>{configured?'พร้อมเรียนรู้ไปด้วยกัน':'อ่านหนังสือได้ · รอเชื่อมต่อ AI'}</div>
-        <h1>ภาษา C เข้าใจได้<br/><span>ทีละคำถาม ทีละก้าว</span></h1>
-        <p className="welcome-description">ถามสิ่งที่สงสัย ลองเขียนโค้ด แล้วค่อย ๆ<br className="desktop-break"/> หาคำตอบจากหนังสือไปด้วยกัน</p>
-       </div><div className="companion-scene" aria-hidden="true"><div className="scene-orbit"/><div className="scene-portrait"><BotAvatar/></div><span className="scene-icon scene-code"><Code2 size={24}/></span><span className="scene-icon scene-book"><BookOpen size={23}/></span><span className="scene-caption">C Companion</span></div></div>
-       <div className="feature-study">
-        <div className="study-copy"><span className="study-tag"><BookOpen size={15}/> หนังสือของห้องเรียนนี้</span><h2>{selected?selected.title:'จากบรรทัดแรก สู่ความเข้าใจ'}</h2><p>{selected?selected.subtitle:'ตัวแปร เงื่อนไข ลูป และอีกหลายเรื่องที่คุณทำได้'}</p><button onClick={()=>selected?send('ช่วยเริ่มติวบทที่ '+chapter+' แบบง่าย ๆ'):setLibrary(true)} disabled={busy}>{selected?'เริ่มเรียนบทนี้':'เลือกบทที่อยากเรียน'} <ArrowUpRight size={17}/></button></div>
-        <div className="code-illustration" aria-label="ตัวอย่างโปรแกรม Hello World"><div className="editor-heading"><span/><span/><span/><small>hello.c</small></div><div className="sample-code"><div><i>1</i><b>#include</b> <em>&lt;stdio.h&gt;</em></div><div><i>2</i></div><div><i>3</i><b>int</b> main(<b>void</b>) {'{'}</div><div><i>4</i>　printf(<em>"Hello, learner!\n"</em>);</div><div><i>5</i>　<b>return</b> <strong>0</strong>;</div><div><i>6</i>{'}'}</div></div><div className="code-output"><span><Check size={13}/> ก้าวแรกของคุณ</span><code>Hello, learner!</code></div></div>
-       </div>
-       <div className="suggestion-heading"><span>เริ่มจากคำถามเล็ก ๆ ก็ได้</span></div>
+       <div className="welcome-avatar"><BotAvatar/></div>
+       <div className="welcome-eyebrow">C COMPANION · ห้องเรียนของคุณ</div>
+       <h1>วันนี้ติดตรงไหนในภาษา C?</h1>
+       <p className="welcome-description">ถามสิ่งที่สงสัย วางโค้ดที่อยากเข้าใจ<br/>หรือเลือกคำถามด้านล่างเพื่อเริ่มเรียน</p>
+       {selected&&<p className="selected-topic"><BookOpen size={16}/> บทที่ {selected.id} · {selected.title}</p>}
        <div className="suggestions">{suggestions.map((q,i)=><button key={q} disabled={busy||!configured} onClick={()=>send(q)}><span className="suggestion-icon">{i===0?<Code2 size={19}/>:i===1?<RotateCcw size={18}/>:<Search size={18}/>}</span><span>{q}</span><ArrowUpRight size={15}/></button>)}</div>
-       <div className="trust-note"><BookOpen size={14}/> ค้นจากหนังสือก่อนตอบ พร้อมแหล่งอ้างอิงให้เปิดอ่าน</div><p className="language-help">พิมพ์ “ตอบเป็นอังกฤษ” หรือ “ตอบเป็นไทย” เพื่อเปลี่ยนภาษาได้เลย</p>
-      </div>:<div className="messages"><div className="conversation-context"><span><BookOpen size={14}/>{label}</span><span>{modes.find(m=>m.id===mode)?.title}</span><button disabled={busy} onClick={()=>reset()}>เริ่มใหม่ <Plus size={14}/></button></div>{messages.map((m,i)=><article key={i} className={'message '+m.role}><div className={'message-avatar '+m.role}>{m.role==='assistant'?<BotAvatar/>:<span>คุณ</span>}</div><div className="message-body">{m.role==='assistant'&&<div className="message-author">C Companion</div>}<div className="prose" lang={m.role==='assistant'?m.replyLanguage:undefined}><Markdown components={{pre:CodeBlock}}>{m.content}</Markdown></div>{m.sources?.length>0&&<div className="citation-list"><span>อ่านต่อในหนังสือ</span>{m.sources.map(s=><button key={s.page} title={s.excerpt} onClick={()=>references.openSource(i,s.page)}><BookOpen size={13}/> บทที่ {s.chapter} · หน้า {s.page}<ArrowUpRight size={12}/></button>)}</div>}{m.role==='assistant'&&m.id&&<ReportLink answer className="report-answer"/>}</div></article>)}{busy&&<div className="thinking" role="status"><span className="message-avatar assistant"><BotAvatar/></span><div><span className="thinking-dots"><i/><i/><i/></span><p>{queueStage||(replyLanguage==='en'?'Sending your question…':'กำลังส่งคำถาม…')}</p></div></div>}<div ref={end}/></div>}
+
+      </div>:<div className="messages"><div className="conversation-context"><span><BookOpen size={14}/>{label}</span><span>{modes.find(m=>m.id===mode)?.title}</span></div>{messages.map((m,i)=><article key={i} className={'message '+m.role}><div className={'message-avatar '+m.role}>{m.role==='assistant'?<BotAvatar/>:<span>คุณ</span>}</div><div className="message-body">{m.role==='assistant'&&<div className="message-author">C Companion</div>}<div className="prose" lang={m.role==='assistant'?m.replyLanguage:undefined}><Markdown components={{pre:CodeBlock}}>{m.content}</Markdown></div>{m.sources?.length>0&&<div className="citation-list"><span>อ่านต่อในหนังสือ</span>{m.sources.map(s=><button key={s.page} title={s.excerpt} onClick={()=>references.openSource(i,s.page)}><BookOpen size={13}/> บทที่ {s.chapter} · หน้า {s.page}<ArrowUpRight size={12}/></button>)}</div>}{m.role==='assistant'&&m.id&&<ReportLink answer className="report-answer"/>}</div></article>)}{busy&&<div className="thinking" role="status"><span className="message-avatar assistant"><BotAvatar/></span><div><span className="thinking-dots"><i/><i/><i/></span><p>{queueStage||(replyLanguage==='en'?'Sending your question…':'กำลังส่งคำถาม…')}</p></div></div>}<div ref={end}/></div>}
      </div>
      <div className="composer-area">
       {away&&<button className="jump-latest" onClick={jumpToLatest}><ArrowDown size={16}/>{unread?'มีคำตอบใหม่ · ไปด้านล่าง':'กลับไปข้อความล่าสุด'}</button>}
       {error&&<div className="error-message" role="alert"><AlertCircle size={17}/><span>{error}</span><button aria-label="ปิดข้อความแจ้งเตือน" onClick={()=>setError('')}><X size={16}/></button></div>}
-      <div className="mode-toolbar"><div className="mode-tabs" role="group" aria-label="รูปแบบการเรียน">{modes.map(m=><button key={m.id} aria-pressed={mode===m.id} disabled={busy} className={mode===m.id?'active':''} onClick={()=>chooseMode(m.id)}><m.icon size={16}/>{m.title}</button>)}</div><button className="chapter-selector" disabled={busy} onClick={()=>setLibrary(true)}><BookOpen size={14}/><span>{chapter?'บทที่ '+chapter:'ทุกบท'}</span><ChevronRight size={13}/></button></div>
+      <div className="mode-toolbar"><div className="mode-tabs" role="group" aria-label="รูปแบบการเรียน">{modes.map(m=><button key={m.id} aria-pressed={mode===m.id} disabled={busy} className={mode===m.id?'active':''} onClick={()=>chooseMode(m.id)}><m.icon size={16}/>{m.title}</button>)}</div></div>
       {mode==='quiz'&&<p className="mode-hint"><Target size={15}/>{replyLanguage==='en'?'Try the exercise first. Then I can review your answer and explain the solution.':'ลองตอบโจทย์ก่อน แล้วระบบจะตรวจคำตอบและอธิบายเฉลยหลังคุณส่งคำตอบ'}</p>}
       <form className={'composer '+(busy?'is-busy':'')} onSubmit={e=>{e.preventDefault();send()}}><label className="sr-only" htmlFor="question">คำถามภาษา C</label><textarea ref={input} id="question" rows={1} maxLength={3000} value={draft} disabled={busy||!configured} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}} placeholder={replyLanguage==='en'?(mode==='quiz'?'Choose a topic, e.g. give me a loop exercise':mode==='tutor'?'What would you like to learn step by step?':'Ask about C programming…'):mode==='quiz'?'อยากฝึกเรื่องไหน? เช่น ขอแบบฝึกหัดเรื่องลูป':mode==='tutor'?'เรื่องไหนที่ยังไม่เข้าใจ? เราจะค่อย ๆ เรียนไปด้วยกัน':'ถามเรื่องภาษา C ได้เลย เช่น ทำไมลูปนี้ถึงไม่หยุด...'}/><div className="composer-bottom"><span>{draft.length>2700?draft.length+'/3,000':(replyLanguage==='en'?'English replies · Book references':'อธิบายเป็นภาษาไทย · อ้างอิงจากหนังสือ')}</span>{answerBusy?<button type="button" className="stop-button" aria-label="หยุดรอคำตอบ" onClick={()=>controller.current?.abort()}><span/></button>:<button className="send-button" type="submit" disabled={busy||!draft.trim()||!configured} aria-label="ส่งคำถาม"><ArrowUp size={21}/></button>}</div></form>
       <p className="composer-note">AI อาจตอบคลาดเคลื่อน ตรวจสอบกับหนังสือก่อนนำไปใช้ <span>Enter เพื่อส่ง · Shift + Enter ขึ้นบรรทัดใหม่</span></p>

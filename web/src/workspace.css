@@ -1,0 +1,55 @@
+/* Chat-only workspace: a quiet reading surface with deliberate interaction. */
+.app{padding:12px;gap:12px;background:var(--room-bg);background-image:none}
+.sidebar{background:var(--room-panel);box-shadow:none;border:1px solid var(--room-line);border-radius:20px;padding:22px 14px 14px}
+.main{background:var(--room-panel);border:1px solid var(--room-line);border-radius:20px;box-shadow:0 8px 32px #153a2810}
+.brand{padding:0 8px 22px}.brand small{font-size:12px}.new-chat{border-radius:12px;min-height:44px;box-shadow:none}
+.history-heading{margin-top:26px}.clear-history{align-self:flex-end;font-size:11px;margin:0 2px 8px;padding:6px 8px;background:transparent}
+.sidebar-footer{border-top:1px solid var(--room-line);padding-top:14px}.sidebar-footer>.avatar{display:none}
+.settings-nav,.report-nav{font-size:13px;min-height:40px}.history-row{border-radius:10px}
+.topbar{min-height:72px;background:transparent;backdrop-filter:none;border-bottom:1px solid var(--room-line);padding:14px 22px}
+.topbar .header-portrait{display:none}.room-label{font-weight:600}.topbar-actions{gap:8px}.book-button,.sources-toggle,.theme-toggle{box-shadow:none;border-radius:10px}
+.chat-scroll{background:transparent;padding:24px 32px}.welcome{max-width:670px;margin:clamp(16px,5vh,60px) auto 24px;text-align:center;padding:0}
+.welcome-avatar{width:64px;height:64px;margin:0 auto 18px;padding:5px;border-radius:22px;background:var(--room-accent-soft)}
+.welcome-avatar .bot-avatar{width:100%;height:100%}.welcome-eyebrow{justify-content:center;font-size:11px;letter-spacing:.09em;color:var(--room-muted);margin:0 0 12px}
+.welcome h1{font-size:clamp(24px,2.6vw,34px);line-height:1.5;letter-spacing:-.025em;margin:0 0 12px;font-weight:600;color:var(--room-text)}
+.welcome-description{font-size:15px;line-height:1.85;margin:0 0 28px;color:var(--room-muted)}
+.selected-topic{display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;color:var(--room-muted)}
+.suggestions{display:flex;flex-direction:column;gap:0;max-width:510px;margin:0 auto;text-align:left;border-top:1px solid var(--room-line)}
+.suggestions>button{display:flex;align-items:center;min-height:58px;width:100%;padding:12px 8px;border:0;border-bottom:1px solid var(--room-line);border-radius:0;background:transparent;box-shadow:none;gap:12px;font-size:14px;text-align:left;transition:background .18s,color .18s}
+.suggestions>button>span:nth-child(2){flex:1}.suggestion-icon{width:30px;height:30px;flex:none;background:transparent;border:0;color:var(--room-accent)}
+.suggestions>button:hover:not(:disabled){transform:none;background:var(--room-accent-soft)}
+.messages{max-width:800px}.conversation-context{padding-bottom:16px;margin-bottom:24px;border-bottom:1px solid var(--room-line);font-size:12px}
+.message.assistant .message-body{max-width:100%}.message{margin-bottom:30px}.prose{overflow-wrap:anywhere}
+.composer-area{max-width:850px;width:100%;margin:0 auto;padding:12px 24px 14px;background:transparent}
+.mode-toolbar{margin:0;padding:8px 10px 0;border:1px solid var(--room-line);border-bottom:0;border-radius:18px 18px 0 0;background:var(--room-panel);justify-content:flex-start}
+.mode-tabs{gap:4px;background:transparent;border:0;padding:0}.mode-tabs button{border-radius:9px;font-size:12px;padding:8px 12px;box-shadow:none;min-height:38px}
+.mode-tabs button.active{background:var(--room-accent-soft);color:var(--room-accent);box-shadow:none}
+.composer{border-radius:0 0 18px 18px;border-top:0;box-shadow:none;background:var(--room-panel);padding:12px 16px 10px;transition:border-color .18s,box-shadow .18s}
+.composer:focus-within{box-shadow:0 5px 18px #147d7012;border-color:var(--room-accent)}
+.composer-area:has(.composer:focus-within) .mode-toolbar{border-color:var(--room-accent)}
+.composer textarea{font-size:15px;line-height:1.75;min-height:46px}.composer-bottom{padding-top:6px}.composer-bottom>span{font-size:11px}
+.send-button,.stop-button{width:38px;height:38px;border-radius:12px}.composer-note{font-size:11px;line-height:1.65;margin:8px 4px 0}.composer-note span{display:none}
+.mode-hint{margin:0;padding:8px 16px;border-left:1px solid var(--room-line);border-right:1px solid var(--room-line);font-size:12px;background:var(--room-panel)}
+.source-panel{box-shadow:none;background:var(--room-panel)}
+@media(min-width:1001px){.source-panel:not([hidden]){animation:reference-enter .2s ease-out}}
+@keyframes reference-enter{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+@media(max-width:760px){
+ .app{padding:0;gap:0}.main{border:0;border-radius:0}.sidebar{border-radius:0 20px 20px 0}
+ .topbar{min-height:60px;padding:10px 12px}.breadcrumb{gap:6px;min-width:0}.breadcrumb>button:last-child{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.room-label,.breadcrumb>svg{display:none}
+ .topbar-actions{gap:4px}.topbar .theme-toggle{width:34px;height:36px}.chat-scroll{padding:20px 18px}
+ .welcome{margin:12px auto 18px}.welcome-avatar{width:48px;height:48px;margin-bottom:12px;border-radius:16px}.welcome h1{font-size:24px}.welcome-description{font-size:14px;margin-bottom:22px}
+ .suggestions>button{font-size:13px;min-height:54px}.composer-area{padding:8px 12px max(10px,env(safe-area-inset-bottom))}.mode-toolbar{padding:6px 6px 0}.mode-tabs{width:100%}.mode-tabs button{flex:1;font-size:12px;padding:8px 5px;gap:5px;min-height:42px}
+ .composer{padding:10px 12px}.composer textarea{font-size:16px;min-height:42px}.composer-note{font-size:10px;text-align:center}.composer-bottom>span{font-size:10px}.conversation-context{margin-bottom:20px}.message{margin-bottom:24px}
+}
+@media(prefers-reduced-motion:reduce){.source-panel,.suggestions>button,.composer{animation:none!important;transition:none!important}}
+:root{--room-bg:var(--room-canvas);--room-panel:var(--room-surface);--room-line:var(--room-border);--room-text:var(--reading);--room-muted:var(--quiet);--room-accent:var(--focus);--room-accent-soft:#e4f0e9}
+:root[data-theme=dark]{--room-accent-soft:#29473e}
+:root[data-theme=dark] .suggestions>button{background:transparent;border:0;border-bottom:1px solid var(--room-line);border-radius:0;min-height:58px;padding:12px 8px}
+:root[data-theme=dark] .composer{border-radius:0 0 18px 18px;border-top:0;box-shadow:none;background:var(--room-panel)}
+:root[data-theme=dark] .mode-tabs{background:transparent;border:0;padding:0}
+:root[data-theme=dark] .topbar{background:transparent;backdrop-filter:none}
+:root[data-theme=dark] .composer-area{padding:12px 24px 14px}
+@media(max-width:760px){:root[data-theme=dark] .composer-area{padding:8px 12px max(10px,env(safe-area-inset-bottom))}:root[data-theme=dark] .suggestions>button{min-height:54px}.app{height:100dvh;margin:0}.welcome,.messages{padding-inline:0}.welcome{padding-top:0}.topbar .breadcrumb>button:last-child{max-width:100px}}
+.main,:root[data-theme=dark] .main{background:var(--room-canvas);background-image:none}
+.suggestions>button{flex-direction:row;justify-content:flex-start;text-align:left}
+.suggestions>button>svg{position:static;flex-shrink:0;margin-left:auto}

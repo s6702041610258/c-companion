@@ -5,6 +5,7 @@ test('a copied book passage shows its verified page and highlighted source',asyn
  await page.getByRole('textbox',{name:'คำถามภาษา C'}).fill('คำว่า In this phase, the intermediate assembly อยู่หน้าไหน');
  await page.getByRole('button',{name:'ส่งคำถาม'}).click();
  await expect(page.getByText(/พบข้อความนี้ในหนังสือหน้า 4 \(PDF หน้า 9\)/)).toBeVisible();
+ await page.getByRole('button',{name:'เปิดแหล่งอ้างอิง'}).click();
  const panel=page.locator('#reference-panel');
  await expect(panel).toBeVisible();
  await expect(panel.locator('mark')).toContainText('In this phase, the intermediate assembly');
@@ -55,9 +56,14 @@ test('mobile learner can close and reopen sources',async({page})=>{
  await page.getByRole('button',{name:'ส่งคำถาม'}).click();
  await expect(page.getByText('คำตอบทดสอบ: พอยน์เตอร์เก็บที่อยู่ของข้อมูล')).toBeVisible();
  const sources=page.getByRole('dialog',{name:'แหล่งอ้างอิง'});
+ await expect(sources).toBeHidden();
+ await page.getByRole('button',{name:'เปิดแหล่งอ้างอิง'}).click();
  await expect(sources).toBeVisible();
+ expect(await page.locator('.learning').evaluate(el=>el.inert)).toBe(true);
  await sources.getByRole('button',{name:'ย่อแผงอ้างอิง'}).click();
  await expect(sources).toBeHidden();
+ expect(await page.locator('.learning').evaluate(el=>el.inert)).toBe(false);
+ await expect(page.getByRole('button',{name:'เปิดแหล่งอ้างอิง'})).toBeFocused();
  await page.getByRole('button',{name:'เปิดแหล่งอ้างอิง'}).click();
  await expect(sources).toBeVisible();
 });

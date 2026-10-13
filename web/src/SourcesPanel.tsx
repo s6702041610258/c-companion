@@ -16,15 +16,17 @@ export function useSources(messages:Message[],chatId:string|null,autoReveal=true
  const update=(change:Partial<PanelState>)=>setSaved(prev=>({...prev,[key]:{...(prev[key]||fallback),...change}}));
  useEffect(()=>{if(latest>=0)setSaved(prev=>!prev[key]||(autoReveal&&latest>prev[key].seen)?{...prev,[key]:{index:latest,page:messages[latest].sources[0].page,open:autoReveal,seen:autoReveal?latest:latest-1}}:prev)},[key,latest]);
  const toggleRef=useRef<HTMLButtonElement>(null);
- const close=()=>{update({open:false});requestAnimationFrame(()=>toggleRef.current?.focus({preventScroll:true}))};
+ const opener=useRef<HTMLElement|null>(null);
+ const rememberOpener=()=>{opener.current=document.activeElement as HTMLElement};
+ const close=()=>{update({open:false});requestAnimationFrame(()=>(opener.current?.isConnected?opener.current:toggleRef.current)?.focus({preventScroll:true}))};
  return {
-  source,group,open,available:latest>=0,unread:latest>state.seen,
+  source,group,open,available:latest>=0,unread:latest>=0&&latest>state.seen,
   scrollKey:key+':'+state.index+':'+(source?.page||0),toggleRef,
   question:messages[state.index-1]?.role==='user'?messages[state.index-1].content:'',
   close,
-  toggle:()=>open?close():update({open:true}),
+  toggle:()=>{if(open)close();else{rememberOpener();update({open:true,seen:Math.max(state.seen,state.index)})}},
   selectPage:(page:number)=>update({page}),
-  openSource:(index:number,page:number)=>update({index,page,open:true,seen:Math.max(state.seen,index)}),
+  openSource:(index:number,page:number)=>{rememberOpener();update({index,page,open:true,seen:Math.max(state.seen,index)})},
   showLatest:()=>update({index:latest,page:messages[latest]?.sources[0]?.page||0,seen:latest,open:true})
  };
 }
@@ -41,6 +43,8 @@ export function SourcesPanel({panel,onBook}:{panel:Controller,onBook:(page:numbe
  useLayoutEffect(()=>{if(panel.open&&scroll.current)scroll.current.scrollTop=positions.current.get(panel.scrollKey)||0},[panel.open,panel.scrollKey]);
  useEffect(()=>{
   if(!compact||!panel.open)return;
+  const background=Array.from(document.querySelectorAll<HTMLElement>('.app > .sidebar,.main > .topbar,.workspace > .learning'));
+  const previousInert=background.map(el=>el.inert);background.forEach(el=>el.inert=true);
   container.current?.querySelector<HTMLButtonElement>('.source-close')?.focus({preventScroll:true});
   const trap=(e:KeyboardEvent)=>{
    if(e.key!=='Tab'||document.querySelector('.modal-overlay'))return;
@@ -49,7 +53,7 @@ export function SourcesPanel({panel,onBook}:{panel:Controller,onBook:(page:numbe
    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}
    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}
   };
-  document.addEventListener('keydown',trap);return()=>document.removeEventListener('keydown',trap);
+  document.addEventListener('keydown',trap);return()=>{background.forEach((el,i)=>el.inert=previousInert[i]);document.removeEventListener('keydown',trap)};
  },[compact,panel.open]);
  if(!panel.source)return null;
  const source=panel.source;

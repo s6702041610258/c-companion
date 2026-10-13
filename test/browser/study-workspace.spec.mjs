@@ -68,3 +68,28 @@ test('settings report service failure honestly and provide the shipped PDF manua
  const pdf=await page.request.head('/manual.pdf');expect(pdf.ok()).toBe(true);expect(pdf.headers()['content-type']).toBe('application/pdf');
  await page.keyboard.press('Escape');await expect(modal).toHaveCount(0);await expect(page.getByRole('button',{name:'การใช้งานและคู่มือ',exact:true})).toBeFocused();
 });
+
+test('compact references restore the citation focus after a nested book dialog',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/chat/');
+ await page.getByRole('textbox',{name:'คำถามภาษา C'}).fill('พอยน์เตอร์คืออะไร');await page.getByRole('button',{name:'ส่งคำถาม',exact:true}).click();
+ const citation=page.locator('.citation-list button').first();await citation.click();
+ const sources=page.getByRole('dialog',{name:'แหล่งอ้างอิง'});await expect(sources).toBeVisible();
+ expect(await page.locator('.learning').evaluate(e=>e.inert)).toBe(true);
+ await sources.getByRole('button',{name:/เปิดหน้าที่/}).click();
+ await page.getByRole('button',{name:'ปิดหนังสือ',exact:true}).click();
+ expect(await page.locator('.learning').evaluate(e=>e.inert)).toBe(true);
+ expect(await page.locator('.sidebar').evaluate(e=>e.inert)).toBe(true);
+ await page.keyboard.press('Escape');await expect(sources).toBeHidden();await expect(citation).toBeFocused();
+ expect(await page.locator('.learning').evaluate(e=>e.inert)).toBe(false);
+});
+
+test('quiet chat entry keeps the three modes and composer reachable on small screens',async({page})=>{
+ for(const width of [320,390,1440]){
+  await page.setViewportSize({width,height:740});await page.goto('/chat/');
+  await expect(page.getByRole('heading',{name:'วันนี้ติดตรงไหนในภาษา C?'})).toBeVisible();
+  await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeInViewport();
+  await expect(page.getByRole('button',{name:'ส่งคำถาม',exact:true})).toBeInViewport();
+  await expect(page.getByRole('group',{name:'รูปแบบการเรียน'}).getByRole('button')).toHaveCount(3);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
+});
