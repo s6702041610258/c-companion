@@ -104,3 +104,11 @@ test('oversized brand fits narrow and desktop screens and chat opens without sce
  }
  await page.locator('.site-header .header-cta').click();await expect(page).toHaveURL(/\/chat\/$/);
 });
+
+test('motion control does not cover hero actions on a short desktop viewport',async({page})=>{
+ await page.setViewportSize({width:1440,height:800});await page.goto('/welcome/');
+ const toggle=await page.locator('.motion-control').boundingBox();
+ for(const link of await page.locator('.hero-actions a').all()){
+  const rect=await link.boundingBox();expect(rect.x+rect.width<=toggle.x||rect.x>=toggle.x+toggle.width||rect.y+rect.height<=toggle.y||rect.y>=toggle.y+toggle.height).toBe(true);
+ }
+});

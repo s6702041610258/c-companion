@@ -44,3 +44,6 @@
 }
 @media(max-width:370px){.hero-art{height:280px}.hero{min-height:920px}.hero-content h2{font-size:27px}.hero-actions{gap:15px}.hero-actions .button{font-size:12px}.site-header{padding-inline:15px}.hero .hero-wordmark{font-size:13vw}}
 @media(prefers-reduced-motion:reduce){.hero-wordmark,.hero-art,.book-object{transform:none!important}}
+/* Keep the motion switch clear of the hero's secondary link. */
+.motion-control{left:auto;right:18px}
+@media(max-width:750px){.motion-control{left:auto;right:12px}}
