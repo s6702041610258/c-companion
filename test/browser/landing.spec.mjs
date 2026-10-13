@@ -73,7 +73,7 @@ test('home always opens Welcome before entering chat, including returning visito
  await expect(page).toHaveTitle('C Companion — แชทบอทช่วยเรียนภาษาซี');
  await page.locator('.hero').getByRole('link',{name:'เริ่มใช้งานแชทบอท',exact:true}).click();
  await expect(page).toHaveURL(/\/chat\/$/);await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeVisible();
- await expect(page).toHaveTitle('C Companion — เปลี่ยนคำถาม ให้เป็นความเข้าใจ');
+ await expect(page).toHaveTitle('C Companion — ห้องแชทภาษา C');
  await expect(page.locator('link[rel=icon]')).toHaveAttribute('href','/welcome/icon.svg');
  expect((await request.get('/welcome/icon.svg')).headers()['content-type']).toBe('image/svg+xml');
  await page.reload();await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeVisible();

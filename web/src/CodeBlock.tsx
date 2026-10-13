@@ -28,8 +28,8 @@ export function CodeBlock({children}:React.ComponentProps<'pre'>){
   setCopied(true);setError(false);clearTimeout(timer.current);timer.current=setTimeout(()=>setCopied(false),1800);
  }catch{setError(true)}}
  return <div className={'code-wrap '+(long&&!expanded?'code-collapsed':'')}>
-  <div className="code-toolbar"><span>{isC?'C':language||'โค้ด'}<small>ตัวอย่างสำหรับอ่านและคัดลอก</small></span><button className="copy-code" aria-label="คัดลอกโค้ด" onClick={copy}>{copied?<Check size={15}/>:<Copy size={15}/>} {copied?'คัดลอกแล้ว':'คัดลอก'}</button></div>
-  <pre id={id} ref={pre} tabIndex={0} aria-label="ตัวอย่างโค้ด">{isC?<code className="language-c">{highlightC(text)}</code>:children}</pre>
+  <div className="code-toolbar"><span>{isC?'C':language||'โค้ด'}<small>อ่านและคัดลอกโค้ด — ระบบไม่ได้รันโค้ด</small></span><button className="copy-code" aria-label="คัดลอกโค้ด" onClick={copy}>{copied?<Check size={15}/>:<Copy size={15}/>} {copied?'คัดลอกแล้ว':'คัดลอก'}</button></div>
+  <pre id={id} ref={pre} tabIndex={0} aria-label="โค้ด">{isC?<code className="language-c">{highlightC(text)}</code>:children}</pre>
   {long&&<button className="expand-code" aria-expanded={expanded} aria-controls={id} onClick={()=>setExpanded(!expanded)}>{expanded?<ChevronUp size={15}/>:<ChevronDown size={15}/>} {expanded?'ย่อโค้ด':'ขยายดูโค้ดทั้งหมด'}</button>}
   {error&&<p className="copy-error" role="status">คัดลอกไม่สำเร็จ กรุณาเลือกข้อความในกล่องโค้ดแล้วคัดลอก</p>}
  </div>;

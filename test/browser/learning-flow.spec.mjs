@@ -72,7 +72,7 @@ test('learner can cancel a delayed answer',async({page})=>{
  await page.goto('/chat/');
  await page.getByRole('textbox',{name:'คำถามภาษา C'}).fill('พอยน์เตอร์ รอทดสอบ');
  await page.getByRole('button',{name:'ส่งคำถาม'}).click();
- await expect(page.getByText('กำลังอ่านเนื้อหาและเรียบเรียงคำอธิบาย…')).toBeVisible();
+ await expect(page.getByText('กำลังประมวลผลคำถาม…')).toBeVisible();
  await page.getByRole('button',{name:'หยุดรอคำตอบ'}).click();
  await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toHaveValue('พอยน์เตอร์ รอทดสอบ');
  await expect(page.getByRole('alert')).toContainText('หยุดรอคำตอบแล้ว');
@@ -83,7 +83,7 @@ test('learner can cancel a delayed answer',async({page})=>{
 test('quiz mode explains when the learner will see the solution',async({page})=>{
  await page.goto('/chat/');
  await page.getByRole('button',{name:'ฝึกทำโจทย์'}).click();
- await expect(page.getByText('ลองตอบโจทย์ก่อน แล้วระบบจะตรวจคำตอบและอธิบายเฉลยหลังคุณส่งคำตอบ')).toBeVisible();
+ await expect(page.getByText('ส่งคำตอบที่ลองทำ แล้วขอคำแนะนำหรือคำอธิบายเฉลยได้')).toBeVisible();
 });
 
 test('book dialog offers a visible PDF fallback',async({page})=>{

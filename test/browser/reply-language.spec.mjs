@@ -47,7 +47,7 @@ test('mobile changes language through chat and remembers it after reload',async(
  await expect(page.getByRole('group',{name:'ภาษาคำตอบ / Reply language'})).toHaveCount(0);
  await page.getByRole('button',{name:'เปิดเมนู',exact:true}).click();
  await page.getByRole('button',{name:'การใช้งานและคู่มือ',exact:true}).click();
- await expect(page.getByText('พิมพ์ “ตอบเป็นอังกฤษ” หรือ “ตอบเป็นไทย” เพื่อเปลี่ยนภาษาได้เลย')).toBeVisible();
+ await expect(page.getByText('พิมพ์ “ตอบเป็นอังกฤษ” หรือ “ตอบเป็นไทย” เพื่อเปลี่ยนภาษาคำตอบ')).toBeVisible();
  await page.getByRole('button',{name:'ปิดการใช้งานและคู่มือ'}).click();
  const field=page.getByRole('textbox',{name:'คำถามภาษา C'});
  await field.fill('ต่อไปตอบอังกฤษนะ');await page.getByRole('button',{name:'ส่งคำถาม',exact:true}).click();

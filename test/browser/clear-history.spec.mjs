@@ -27,8 +27,8 @@ test('mobile clear history can be cancelled, retains errors and removes the curr
  await expect(page.locator('.message.assistant')).toBeVisible();
  await page.getByRole('button',{name:'เปิดเมนู',exact:true}).click();
  await page.getByRole('button',{name:'ลบประวัติทั้งหมด',exact:true}).click();
- await expect(page.getByRole('button',{name:'เก็บไว้',exact:true})).toBeFocused();
- await page.getByRole('button',{name:'เก็บไว้',exact:true}).click();
+ await expect(page.getByRole('button',{name:'ยกเลิก',exact:true})).toBeFocused();
+ await page.getByRole('button',{name:'ยกเลิก',exact:true}).click();
  await expect(page.locator('.history-row')).toHaveCount(1);
  await page.getByRole('button',{name:'ลบประวัติทั้งหมด',exact:true}).click();
  await page.route('**/api/chats',route=>route.request().method()==='DELETE'?route.fulfill({status:503,json:{error:'ทดสอบการเชื่อมต่อขัดข้อง'}}):route.continue(),{times:1});

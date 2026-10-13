@@ -32,7 +32,7 @@ export function useSources(messages:Message[],chatId:string|null,autoReveal=true
 }
 type Controller=ReturnType<typeof useSources>;
 export function SourcesButton({panel}:{panel:Controller}){
- return <button ref={panel.toggleRef} className={'sources-toggle '+(panel.open?'active':'')} aria-label={panel.open?'ย่อแหล่งอ้างอิง':'เปิดแหล่งอ้างอิง'} aria-expanded={panel.open} aria-controls="reference-panel" disabled={!panel.available} title={panel.available?'แหล่งอ้างอิงของคำตอบ':'แหล่งอ้างอิงจะแสดงเมื่อได้รับคำตอบ'} onClick={panel.toggle}><PanelRightOpen size={17}/><span>แหล่งอ้างอิง</span>{panel.available&&<span className="source-count">{panel.group.length}</span>}{panel.unread&&<span className="source-unread" role="status" aria-label="มีแหล่งอ้างอิงจากคำตอบใหม่"/>}</button>;
+ return <button ref={panel.toggleRef} className={'sources-toggle '+(panel.open?'active':'')} aria-label={panel.open?'ย่อแหล่งอ้างอิง':'เปิดแหล่งอ้างอิง'} aria-expanded={panel.open} aria-controls="reference-panel" disabled={!panel.available} title={panel.available?'แหล่งอ้างอิงของคำตอบ':'แสดงเมื่อคำตอบมีแหล่งอ้างอิง'} onClick={panel.toggle}><PanelRightOpen size={17}/><span>แหล่งอ้างอิง</span>{panel.available&&<span className="source-count">{panel.group.length}</span>}{panel.unread&&<span className="source-unread" role="status" aria-label="มีแหล่งอ้างอิงจากคำตอบใหม่"/>}</button>;
 }
 export function SourcesPanel({panel,onBook}:{panel:Controller,onBook:(page:number)=>void}){
  const scroll=useRef<HTMLDivElement>(null),container=useRef<HTMLElement>(null);
@@ -69,7 +69,7 @@ export function SourcesPanel({panel,onBook}:{panel:Controller,onBook:(page:numbe
      <p className="source-question" title={panel.question}>อ้างอิงสำหรับ: {panel.question||'คำตอบที่เลือก'}</p>
      <nav className="source-page-tabs" aria-label="หน้าอ้างอิงของคำตอบ">{panel.group.map(s=><button key={s.page} aria-pressed={source.page===s.page} onClick={()=>panel.selectPage(s.page)}>หน้า {s.page}</button>)}</nav>
      <span className="source-label">จากหนังสือ C Companion</span><h2>{source.title}</h2><div className="page-pill">บทที่ {source.chapter} <span/> หน้า {source.page}</div><blockquote>{source.matchedText?<>{source.before} <mark>{source.matchedText}</mark> {source.after}</>:<>{source.excerpt}…</>}</blockquote>
-     <p className="source-help">ข้อความต้นฉบับจากหน้าที่ใช้ตอบ เปิดหนังสือเพื่ออ่านเนื้อหาและตัวอย่างครบถ้วน</p><button className="primary-button" onClick={()=>onBook(source.pdfPage)}>เปิดหน้าที่ {source.page} <ExternalLink size={15}/></button><div className="source-footer"><Check size={15}/> เลขหน้าอ้างอิงผ่านการตรวจสอบ</div>
+     <p className="source-help">ข้อความที่ระบบดึงจากหนังสือ เปิดหน้าหนังสือเพื่ออ่านเนื้อหาครบถ้วน</p><button className="primary-button" onClick={()=>onBook(source.pdfPage)}>เปิดหน้าที่ {source.page} <ExternalLink size={15}/></button><div className="source-footer"><Check size={15}/> เปิดหน้าหนังสือเพื่อตรวจสอบคำตอบ</div>
     </div>
    </div>
   </aside>

@@ -14,7 +14,7 @@ test('mode changes preserve drafts and history; clicking the active mode never c
  const input=page.getByRole('textbox',{name:'คำถามภาษา C'});await input.fill('ข้อความที่ยังไม่ได้ส่ง');
  await page.getByRole('button',{name:'ถามคำถาม',exact:true}).click();await expect(page.locator('.message')).toHaveCount(2);
  await page.getByRole('button',{name:'ติวทีละขั้น',exact:true}).click();await expect(page.getByRole('alertdialog')).toBeVisible();
- await page.getByRole('button',{name:'คุยต่อโหมดเดิม'}).click();await expect(input).toHaveValue('ข้อความที่ยังไม่ได้ส่ง');await expect(page.locator('.message')).toHaveCount(2);
+ await page.getByRole('button',{name:'ใช้โหมดเดิม'}).click();await expect(input).toHaveValue('ข้อความที่ยังไม่ได้ส่ง');await expect(page.locator('.message')).toHaveCount(2);
  await page.getByRole('button',{name:'ติวทีละขั้น',exact:true}).click();await page.getByRole('button',{name:'เริ่มโหมดใหม่'}).click();
  await expect(page.locator('.welcome')).toBeVisible();await expect(input).toHaveValue('ข้อความที่ยังไม่ได้ส่ง');await expect(page.getByRole('button',{name:'ติวทีละขั้น',exact:true})).toHaveAttribute('aria-pressed','true');
  await expect(page.getByRole('button',{name:chat.title,exact:true})).toBeVisible();
@@ -86,7 +86,7 @@ test('compact references restore the citation focus after a nested book dialog',
 test('quiet chat entry keeps the three modes and composer reachable on small screens',async({page})=>{
  for(const width of [320,390,1440]){
   await page.setViewportSize({width,height:740});await page.goto('/chat/');
-  await expect(page.getByRole('heading',{name:'วันนี้ติดตรงไหนในภาษา C?'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'ต้องการสอบถามเรื่องใดในภาษา C?'})).toBeVisible();
   await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeInViewport();
   await expect(page.getByRole('button',{name:'ส่งคำถาม',exact:true})).toBeInViewport();
   await expect(page.getByRole('group',{name:'รูปแบบการเรียน'}).getByRole('button')).toHaveCount(3);
