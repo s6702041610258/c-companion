@@ -117,6 +117,9 @@ test('motion control does not cover hero actions on desktop or mobile',async({pa
 
 test('cinematic scroll holds the scene, changes chapters and releases to ordinary content',async({page})=>{
  test.setTimeout(60000);
+ // Verify scroll/caption behavior independently of software GPU frame time.
+ // The dedicated model test below verifies real WebGL loading and viewport coverage.
+ await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){if(String(kind).startsWith('webgl'))return null;return original.call(this,kind,...args)}});
  await page.setViewportSize({width:1440,height:900});await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('/welcome/');
  await expect(page.locator('html')).toHaveAttribute('data-motion','on');
  await expect(page.locator('.hero')).toHaveCSS('position','sticky');
