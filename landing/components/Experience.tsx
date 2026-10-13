@@ -25,8 +25,8 @@ export function Experience(){
     gsap.to('.red-moon',{x:-130,y:100,scale:1.25,ease:'none',scrollTrigger:{trigger:'.cinematic-stage',start:'top top',end:'bottom bottom',scrub:1}});
     gsap.fromTo('.book-object',{rotateY:-28,rotateZ:-9},{rotateY:12,rotateZ:3,ease:'none',scrollTrigger:{trigger:'.book-intro',start:'top bottom',end:'bottom top',scrub:1}});
    });
-   const hero=document.querySelector<HTMLElement>('.hero-art')!,host=document.getElementById('dragon-scene')!;
-   let scene:ReturnType<typeof import('./dragon-scene').createDragonScene>|null=null;
+   const hero=document.querySelector<HTMLElement>('.hero-art')!,host=document.getElementById('learning-scene')!;
+   let scene:ReturnType<typeof import('./learning-scene').createLearningScene>|null=null;
    const meter=document.querySelector('.scene-meter b');
    const driver={progress:0};
    const cameraMotion=gsap.to(driver,{progress:1,ease:'none',onUpdate:()=>{scene?.setProgress(driver.progress);if(meter)meter.textContent=`0${Math.min(3,1+Math.floor(driver.progress*3))} / 03`},scrollTrigger:{trigger:'.cinematic-stage',start:'top top',end:()=>innerWidth>900?'bottom bottom':'bottom top',scrub:.65}});
@@ -35,7 +35,7 @@ export function Experience(){
    const leave=()=>scene?.setPointer(0,0);hero.addEventListener('pointermove',pointer);hero.addEventListener('pointerleave',leave);
    let loading=false,attempted=false;
    const visible=()=>{const r=host.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight};
-   async function loadScene(){if(cancelled||loading||attempted||!visible())return;loading=true;try{const {createDragonScene}=await import('./dragon-scene');if(!cancelled&&visible()){attempted=true;scene=createDragonScene(host);scene?.setProgress(sceneTrigger.progress)}}catch{host.classList.remove('scene-ready')}finally{loading=false}}
+   async function loadScene(){if(cancelled||loading||attempted||!visible())return;loading=true;try{const {createLearningScene}=await import('./learning-scene');if(!cancelled&&visible()){attempted=true;scene=createLearningScene(host);scene?.setProgress(sceneTrigger.progress)}}catch{host.classList.remove('scene-ready')}finally{loading=false}}
    const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting))void loadScene()});observer.observe(host);
    cleanup=()=>{observer.disconnect();reading.scrollTrigger?.kill();reading.revert();sceneTrigger.kill();cameraMotion.kill();scene?.dispose();mm.revert();hero.removeEventListener('pointermove',pointer);hero.removeEventListener('pointerleave',leave)};
    await document.fonts.ready;if(!cancelled)ScrollTrigger.refresh();

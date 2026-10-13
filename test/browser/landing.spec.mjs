@@ -23,14 +23,14 @@ test('native mode gallery stays controllable without trapping page scroll and mo
  await expect(page.locator('.tutor-card h3')).toBeInViewport();
  await page.locator('.quiz-card a').focus();await expect(page.locator('.quiz-card a')).toBeInViewport({ratio:.9});
  await page.getByRole('button',{name:'ลดการเคลื่อนไหว',exact:true}).click();
- await expect(page.locator('html')).toHaveAttribute('data-motion','off');await expect(page.locator('.pin-spacer')).toHaveCount(0);await expect(page.locator('#dragon-scene canvas')).toHaveCount(0);
+ await expect(page.locator('html')).toHaveAttribute('data-motion','off');await expect(page.locator('.pin-spacer')).toHaveCount(0);await expect(page.locator('#learning-scene canvas')).toHaveCount(0);
  for(const card of ['.ask-card','.tutor-card','.quiz-card']){await page.locator(card).scrollIntoViewIfNeeded();await expect(page.locator(card+' h3')).toBeInViewport()}
  await page.reload();await expect(page.locator('html')).toHaveAttribute('data-motion','off');
 });
 
 test('reduced motion never loads a WebGL scene and narrow mobile retains all content without overflow',async({page})=>{
  await page.setViewportSize({width:320,height:740});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/welcome/');
- await expect(page.locator('html')).toHaveAttribute('data-motion','off');await expect(page.locator('#dragon-scene canvas')).toHaveCount(0);await expect(page.locator('.pin-spacer')).toHaveCount(0);
+ await expect(page.locator('html')).toHaveAttribute('data-motion','off');await expect(page.locator('#learning-scene canvas')).toHaveCount(0);await expect(page.locator('.pin-spacer')).toHaveCount(0);
  await page.getByRole('tab',{name:'ติวทีละขั้น'}).click();await expect(page.getByRole('tabpanel')).toContainText('printf');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.locator('.local-option').scrollIntoViewIfNeeded();await expect(page.getByRole('link',{name:'อ่านคู่มือติดตั้ง'})).toBeInViewport();
@@ -41,7 +41,7 @@ test('WebGL failure keeps the illustrated fallback, usable links and working exa
  await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){if(String(kind).startsWith('webgl'))return null;return original.call(this,kind,...args)}});
  await page.goto('/welcome/');await expect(page.locator('html')).toHaveAttribute('data-motion','on');
  await page.getByRole('tab',{name:'ฝึกทำโจทย์'}).click();await expect(page.getByRole('tabpanel')).toContainText('คะแนน');
- await expect(page.locator('#dragon-scene canvas')).toHaveCount(0);await expect(page.locator('.scene-fallback')).toHaveCSS('opacity','1');
+ await expect(page.locator('#learning-scene canvas')).toHaveCount(0);await expect(page.locator('.scene-fallback')).toHaveCSS('opacity','1');
 });
 
 test('static landing remains readable and navigable with JavaScript disabled',async({browser})=>{
@@ -58,7 +58,7 @@ test('chat entry does not load the landing animation bundle',async({page})=>{
 
 test('data-saving preference starts without motion and still allows an explicit opt-in',async({page})=>{
  await page.emulateMedia({reducedMotion:'no-preference'});await page.addInitScript(()=>Object.defineProperty(navigator,'connection',{value:{saveData:true},configurable:true}));
- await page.goto('/welcome/');await expect(page.locator('html')).toHaveAttribute('data-motion','off');await expect(page.locator('#dragon-scene canvas')).toHaveCount(0);
+ await page.goto('/welcome/');await expect(page.locator('html')).toHaveAttribute('data-motion','off');await expect(page.locator('#learning-scene canvas')).toHaveCount(0);
  await page.getByRole('button',{name:'เปิดการเคลื่อนไหว',exact:true}).click();await expect(page.locator('html')).toHaveAttribute('data-motion','on');
 });
 
@@ -141,4 +141,28 @@ test('short laptop opening keeps the primary and secondary actions above the foo
  for(const link of await page.locator('.hero-actions a').all()){
   await expect(link).toBeInViewport({ratio:1});const rect=await link.boundingBox();expect(rect.y+rect.height).toBeLessThan(footer.y);
  }
+});
+
+test('Mongkoi model loads in a full-viewport scene and cleans up when motion stops',async({page,request})=>{
+ await page.setViewportSize({width:1440,height:900});await page.emulateMedia({reducedMotion:'no-preference'});
+ const model=await request.get('/welcome/models/mongkoi-giraffe.glb');expect(model.ok()).toBe(true);
+ const bytes=await model.body();expect(bytes.toString('ascii',0,4)).toBe('glTF');
+ const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
+ expect(gltf.nodes.some(n=>n.name==='Thai chest embroidery')).toBe(true);expect(gltf.nodes.some(n=>n.name==='Cube')).toBe(false);
+ const textureLoaded=page.waitForResponse(r=>r.url().endsWith('/library-texture-1.jpg')&&r.ok());
+ const textureErrors=[];page.on('console',m=>{if(m.type()==='error'&&m.text().includes('texture'))textureErrors.push(m.text())});
+ await page.goto('/welcome/');await textureLoaded;await expect(page.locator('#learning-scene')).toHaveClass('scene-ready',{timeout:20000});
+ expect(textureErrors).toEqual([]);
+ const hero=await page.locator('.hero').boundingBox(),canvas=await page.locator('#learning-scene canvas').boundingBox();
+ expect(canvas.width).toBe(hero.width);expect(canvas.height).toBe(hero.height);
+ await page.getByRole('button',{name:'ลดการเคลื่อนไหว',exact:true}).click();
+ await expect(page.locator('#learning-scene canvas')).toHaveCount(0);await expect(page.locator('.scene-fallback')).toHaveCSS('opacity','1');
+});
+
+test('missing mascot model retains the portrait and usable landing',async({page})=>{
+ await page.route('**/models/mongkoi-giraffe.glb',route=>route.abort());
+ await page.goto('/welcome/');await expect(page.locator('html')).toHaveAttribute('data-motion','on');
+ await expect(page.locator('.mongkoi-fallback')).toBeVisible();
+ await page.getByRole('tab',{name:'ติวทีละขั้น'}).click();await expect(page.getByRole('tabpanel')).toContainText('i < 3');
+ await expect(page.locator('.scene-fallback')).toHaveCSS('opacity','1');
 });
