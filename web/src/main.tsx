@@ -18,6 +18,7 @@ import './theme.css';
 import './conversation.css';
 import './polish.css';
 import './workspace.css';
+import './midnight.css';
 type Chapter={id:number,title:string,subtitle:string,start:number,end:number};
 type Source={page:number,pdfPage:number,chapter:number,title:string,excerpt:string,before?:string,matchedText?:string,after?:string};
 type Message={id?:number,role:'user'|'assistant',content:string,sources:Source[],replyLanguage?:ReplyLanguage};
@@ -121,7 +122,7 @@ function App(){
    <HistoryList initial={chats} active={chatId} busy={busy} onOpen={openChat} onDelete={c=>{setDeleteError('');setDeleting(c)}} base={base}/>
 
    <button className="nav-item settings-nav" onClick={()=>{setSettings(true);setSidebar(false)}}><Settings size={18}/>การใช้งานและคู่มือ</button>
-   <ReportLink className="nav-item report-nav" onClick={()=>setSidebar(false)}/><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.11.0</span></div>
+   <ReportLink className="nav-item report-nav" onClick={()=>setSidebar(false)}/><div className="sidebar-footer"><span className="avatar">C</span><div>พื้นที่เรียนรู้<small>ประวัติเก็บแยกในเบราว์เซอร์นี้</small></div><span className="version-badge">1.15.0</span></div>
   </aside>
   <main className="main" id="chat-main" tabIndex={-1}>
    <header className="topbar"><div className="breadcrumb"><button className="icon-button desktop-collapse" aria-label={collapsed?'ขยายเมนู':'ย่อเมนู'} aria-expanded={!collapsed} aria-controls="main-navigation" onClick={()=>setCollapsed(!collapsed)}>{collapsed?<PanelLeftOpen size={20}/>:<PanelLeftClose size={20}/>}</button><button className="icon-button mobile-menu" aria-label="เปิดเมนู" aria-expanded={sidebar} aria-controls="main-navigation" onClick={()=>setSidebar(true)}><Menu size={20}/></button><span className="desktop-icon header-portrait"><BotAvatar/></span><span className="room-label">ห้องติว</span><ChevronRight size={14}/><button onClick={()=>setLibrary(true)}>{label}</button></div><div className="topbar-actions"><SourcesButton panel={references}/><button className="book-button" aria-label="เปิดหนังสือ" onClick={()=>setBookPage(selected?selected.start+5:1)}><BookOpen size={16}/><span>เปิดหนังสือ</span></button><button className="theme-toggle" type="button" aria-label={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} title={theme==='dark'?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด'} onClick={toggleTheme}>{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}<span>{theme==='dark'?'โหมดสว่าง':'โหมดมืด'}</span></button></div></header>
@@ -129,7 +130,7 @@ function App(){
     <section className="learning">
      <div className="chat-scroll" ref={scroll} onScroll={trackScroll}>
       {messages.length===0?<div className="welcome">
-       <div className="welcome-avatar"><BotAvatar/></div>
+       <div className="welcome-avatar"><BotAvatar large/></div>
        <div className="welcome-eyebrow">C COMPANION · ห้องเรียนของคุณ</div>
        <h1>วันนี้ติดตรงไหนในภาษา C?</h1>
        <p className="welcome-description">ถามสิ่งที่สงสัย วางโค้ดที่อยากเข้าใจ<br/>หรือเลือกคำถามด้านล่างเพื่อเริ่มเรียน</p>

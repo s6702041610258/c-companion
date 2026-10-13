@@ -105,7 +105,7 @@ test('reading theme follows the system and remembers a manual choice',async({pag
  await page.goto('/chat/');
  await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
  await expect(page.getByRole('button',{name:'เปลี่ยนเป็นโหมดสว่าง'})).toBeVisible();
- expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(16, 26, 34)');
+ expect(await page.locator('.main').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(9, 13, 20)');
  await page.getByRole('button',{name:'เปลี่ยนเป็นโหมดสว่าง'}).click();
  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
  await page.reload();

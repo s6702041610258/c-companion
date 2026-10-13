@@ -1,0 +1,39 @@
+/* Landing's midnight / vermilion / ivory palette, scoped to dark chat only. */
+:root[data-theme=dark]{
+ --page:#090d14;--sidebar:#131720;--surface:#191d27;--raised:#252936;--hover:#2b303d;
+ --text:#f1e7db;--secondary:#d2c9c3;--muted:#b8b0ad;--line:#41434f;
+ --accent:#f28b7f;--accent-hover:#ffc0b5;--accent-soft:#422a2d;--teal:var(--accent);
+ --room-canvas:var(--page);--room-surface:var(--surface);--room-border:var(--line);
+ --reading:var(--text);--quiet:var(--muted);--focus:var(--accent);--room-accent-soft:var(--accent-soft);
+ --glass:var(--sidebar);--glass-edge:var(--line);--glass-shadow:0 16px 50px #0003;
+ --action:#c92e25;--action-hover:#af251f;
+}
+:root[data-theme=dark] body{background:var(--page)}
+:root[data-theme=dark] ::selection{background:#78403b;color:#fff}
+:root[data-theme=dark] .main,:root[data-theme=dark] .sidebar{box-shadow:none}
+:root[data-theme=dark] .sidebar{background:var(--sidebar)}
+:root[data-theme=dark] .sidebar .new-chat{background:var(--surface);color:var(--text);border-color:var(--line)}
+:root[data-theme=dark] .welcome h1 span,:root[data-theme=dark] .message.assistant .message-author{color:var(--accent)}
+:root[data-theme=dark] .suggestion-icon{background:transparent;color:var(--accent)}
+:root[data-theme=dark] .suggestions>button:hover:not(:disabled){background:var(--accent-soft);box-shadow:none}
+:root[data-theme=dark] .history-row.selected{background:var(--accent-soft);box-shadow:inset 3px 0 var(--accent)}
+:root[data-theme=dark] .history-row.selected>button:first-child{color:var(--text)}
+:root[data-theme=dark] .message.user .message-body{background:#30262c;border-color:#62454b}
+:root[data-theme=dark] .message.user .message-avatar{background:#613735;color:#fff2eb}
+:root[data-theme=dark] .composer:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px #f28b7f22}
+:root[data-theme=dark] .mode-hint{background:var(--room-panel);color:var(--secondary)}
+:root[data-theme=dark] .send-button,:root[data-theme=dark] .stop-button,:root[data-theme=dark] .primary-button,:root[data-theme=dark] .book-fallback a,:root[data-theme=dark] .confirm .confirm-primary{background:var(--action);color:#fff}
+:root[data-theme=dark] .send-button:hover:enabled,:root[data-theme=dark] .primary-button:hover,:root[data-theme=dark] .book-fallback a:hover{background:var(--action-hover);color:#fff}
+:root[data-theme=dark] .send-button:disabled{background:#383c49;color:#c0bcc0}
+:root[data-theme=dark] .stop-button span{background:#fff}
+:root[data-theme=dark] .source-page-tabs button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+:root[data-theme=dark] .new-reference:hover{background:#563237}
+:root[data-theme=dark] .source-content blockquote mark{background:#ecd8ba;color:#302320}
+:root[data-theme=dark] .little-book{background:#422a2d;border-color:#c28f79;color:#f2dfc3;box-shadow:3px 3px 0 #090d14}
+:root[data-theme=dark] .code-toolbar{background:#222632;color:var(--secondary);border-color:var(--line)}
+:root[data-theme=dark] .code-toolbar .copy-code,:root[data-theme=dark] .expand-code{background:#292d39;color:var(--text);border-color:var(--line)}
+:root[data-theme=dark] .prose .code-wrap pre{background:#0d1119;color:#ede4da}
+:root[data-theme=dark] .code-wrap pre:focus-visible{outline-color:var(--accent)}
+:root[data-theme=dark] .prose :not(pre)>code{background:var(--raised);color:#f3c1a9}
+:root[data-theme=dark] .confirm button.danger{background:#92302f;color:#fff}
+:root[data-theme=dark] .confirm .delete-error,:root[data-theme=dark] .clear-history:hover:not(:disabled){color:#ffb4b4}
