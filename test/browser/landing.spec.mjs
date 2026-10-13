@@ -10,7 +10,7 @@ test('landing hydrates under hash-based CSP and demo tabs work with keyboard wit
  await page.keyboard.press('Home');await expect(page.getByRole('tabpanel')).toContainText('บทที่ 4');
  expect(errors).toEqual([]);expect(writes).toEqual([]);
  const chat=await request.get('/chat/');expect(chat.headers()['content-security-policy']).not.toContain('sha256-');
- await expect(page.locator('.hero').getByRole('link',{name:'เริ่มคุยกับ C Companion',exact:true})).toHaveAttribute('href','/chat/');
+ await expect(page.locator('.hero').getByRole('link',{name:'เริ่มใช้งานแชทบอท',exact:true})).toHaveAttribute('href','/chat/');
  expect((await request.head('/manual.pdf')).ok()).toBe(true);expect((await request.head('/book.pdf')).ok()).toBe(true);
 });
 
@@ -48,7 +48,7 @@ test('static landing remains readable and navigable with JavaScript disabled',as
  const context=await browser.newContext({javaScriptEnabled:false});const page=await context.newPage();
  try{await page.goto('http://127.0.0.1:18080/welcome/');await expect(page.getByRole('heading',{level:1})).toContainText('COMPANION');await expect(page.locator('.chapter-item')).toHaveCount(12);
  await page.locator('summary').filter({hasText:'ต้องเขียนภาษา C เป็นก่อนหรือไม่?'}).click();await expect(page.getByText('เริ่มจากพื้นฐานได้',{exact:false})).toBeVisible();
- await page.locator('.hero').getByRole('link',{name:'เริ่มคุยกับ C Companion',exact:true}).click();await expect(page).toHaveURL('http://127.0.0.1:18080/chat/');
+ await page.locator('.hero').getByRole('link',{name:'เริ่มใช้งานแชทบอท',exact:true}).click();await expect(page).toHaveURL('http://127.0.0.1:18080/chat/');
  }finally{await context.close()}
 });
 
@@ -70,8 +70,8 @@ test('home always opens Welcome before entering chat, including returning visito
   expect(response.status()).toBe(302);expect(response.headers().location).toBe('/welcome/');expect(response.headers()['cache-control']).toBe('no-store');
  }
  await page.goto('/');await expect(page).toHaveURL(/\/welcome\/$/);
- await expect(page).toHaveTitle('C Companion — เปลี่ยนคำถาม ให้เป็นความเข้าใจ');
- await page.locator('.hero').getByRole('link',{name:'เริ่มคุยกับ C Companion',exact:true}).click();
+ await expect(page).toHaveTitle('C Companion — แชทบอทช่วยเรียนภาษาซี');
+ await page.locator('.hero').getByRole('link',{name:'เริ่มใช้งานแชทบอท',exact:true}).click();
  await expect(page).toHaveURL(/\/chat\/$/);await expect(page.getByRole('textbox',{name:'คำถามภาษา C'})).toBeVisible();
  await expect(page).toHaveTitle('C Companion — เปลี่ยนคำถาม ให้เป็นความเข้าใจ');
  await expect(page.locator('link[rel=icon]')).toHaveAttribute('href','/welcome/icon.svg');
@@ -88,7 +88,7 @@ test('learning journey explains each step and mobile gallery changes with its co
  await page.getByRole('button',{name:'ฝึกทำโจทย์',exact:true}).click();await expect(page.locator('.quiz-card h3')).toBeInViewport();
  await page.locator('.quiz-card a').click();await expect(page.getByRole('tab',{name:'ฝึกทำโจทย์'})).toHaveAttribute('aria-selected','true');
  await page.getByRole('button',{name:'ถามคำถาม',exact:true}).click();await expect(page.locator('.ask-card h3')).toBeInViewport();
- await page.getByRole('button',{name:/ค้นเนื้อหาที่เกี่ยวข้อง/}).click();await expect(page.locator('#journey-detail')).toContainText('ไม่ได้ค้นเว็บทั่วไป');
+ await page.getByRole('button',{name:/ค้นเนื้อหาที่เกี่ยวข้อง/}).click();await expect(page.locator('#journey-detail')).toContainText('ไม่ได้ใช้การค้นเว็บทั่วไป');
  await page.getByRole('button',{name:/อธิบายตามโหมดที่เลือก/}).focus();await page.keyboard.press('Enter');await expect(page.locator('#journey-detail')).toContainText('บริการ AI');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
@@ -132,7 +132,7 @@ test('cinematic scroll holds the scene, changes chapters and releases to ordinar
  await page.evaluate(()=>scrollTo({top:1750,behavior:'instant'}));
  await expect(page.locator('.scene-meter b')).toHaveText('03 / 03');
  await expect(page.locator('[data-scene-caption="2"]')).toHaveCSS('opacity','1',{timeout:15000});
- await page.getByRole('link',{name:'เปิดโลกการเรียนรู้',exact:true}).click();await expect(page.locator('#intro-title')).toBeInViewport({timeout:15000});
+ await page.getByRole('link',{name:'ดูความสามารถของระบบ',exact:true}).click();await expect(page.locator('#intro-title')).toBeInViewport({timeout:15000});
  await page.getByRole('button',{name:'ลดการเคลื่อนไหว',exact:true}).click();
  await expect(page.locator('.hero')).toHaveCSS('position','relative');
  await expect(page.locator('.hero-content')).toHaveCSS('visibility','visible');
