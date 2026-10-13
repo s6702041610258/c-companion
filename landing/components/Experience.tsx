@@ -14,22 +14,30 @@ export function Experience(){
    const reading=gsap.to('.reading-progress',{scaleX:1,ease:'none',scrollTrigger:{start:0,end:'max',scrub:true}});
    const mm=gsap.matchMedia();
    mm.add('(min-width: 901px)',()=>{
-    const hero=document.querySelector('.hero')!;
-    gsap.to('.hero-content',{y:-35,ease:'none',scrollTrigger:{trigger:hero,start:'top top',end:'bottom 20%',scrub:true}});
-    gsap.to('.hero-wordmark',{y:110,scale:.96,ease:'none',scrollTrigger:{trigger:hero,start:'top top',end:'bottom top',scrub:1}});
-    gsap.fromTo('.book-object',{rotateY:-28,rotateZ:-9},{rotateY:-8,rotateZ:0,ease:'none',scrollTrigger:{trigger:'.book-intro',start:'top bottom',end:'bottom top',scrub:1}});
-
+    const timeline=gsap.timeline({scrollTrigger:{trigger:'.cinematic-stage',start:'top top',end:'bottom bottom',scrub:.65}});
+    timeline.to('.hero-wordmark',{scale:1.6,y:-200,opacity:0,duration:.3,ease:'power1.in'},0)
+     .to('.hero-content',{y:-60,autoAlpha:0,duration:.22,ease:'none'},0)
+     .fromTo('[data-scene-caption="1"]',{y:70,opacity:0},{y:0,opacity:1,duration:.16},.28)
+     .to('[data-scene-caption="1"]',{y:-55,opacity:0,duration:.15},.57)
+     .fromTo('[data-scene-caption="2"]',{y:60,opacity:0},{y:0,opacity:1,duration:.22},.73);
+    // Explicit duration keeps the scroll rig and copy on the same 0–1 clock.
+    timeline.to('.scene-meter i',{scaleX:1,duration:1,ease:'none'},0);
+    gsap.to('.red-moon',{x:-130,y:100,scale:1.25,ease:'none',scrollTrigger:{trigger:'.cinematic-stage',start:'top top',end:'bottom bottom',scrub:1}});
+    gsap.fromTo('.book-object',{rotateY:-28,rotateZ:-9},{rotateY:12,rotateZ:3,ease:'none',scrollTrigger:{trigger:'.book-intro',start:'top bottom',end:'bottom top',scrub:1}});
    });
    const hero=document.querySelector<HTMLElement>('.hero-art')!,host=document.getElementById('dragon-scene')!;
    let scene:ReturnType<typeof import('./dragon-scene').createDragonScene>|null=null;
-   const sceneTrigger=ScrollTrigger.create({trigger:'.hero',start:'top top',end:'bottom top',onUpdate:self=>scene?.setProgress(self.progress)});
+   const meter=document.querySelector('.scene-meter b');
+   const driver={progress:0};
+   const cameraMotion=gsap.to(driver,{progress:1,ease:'none',onUpdate:()=>{scene?.setProgress(driver.progress);if(meter)meter.textContent=`0${Math.min(3,1+Math.floor(driver.progress*3))} / 03`},scrollTrigger:{trigger:'.cinematic-stage',start:'top top',end:()=>innerWidth>900?'bottom bottom':'bottom top',scrub:.65}});
+   const sceneTrigger=cameraMotion.scrollTrigger!;
    const pointer=(event:PointerEvent)=>{if(event.pointerType==='touch')return;const r=hero.getBoundingClientRect();scene?.setPointer(Math.max(-1,Math.min(1,(event.clientX-r.left)/r.width*2-1)),Math.max(-1,Math.min(1,(event.clientY-r.top)/r.height*2-1)))};
    const leave=()=>scene?.setPointer(0,0);hero.addEventListener('pointermove',pointer);hero.addEventListener('pointerleave',leave);
    let loading=false,attempted=false;
    const visible=()=>{const r=host.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight};
    async function loadScene(){if(cancelled||loading||attempted||!visible())return;loading=true;try{const {createDragonScene}=await import('./dragon-scene');if(!cancelled&&visible()){attempted=true;scene=createDragonScene(host);scene?.setProgress(sceneTrigger.progress)}}catch{host.classList.remove('scene-ready')}finally{loading=false}}
    const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting))void loadScene()});observer.observe(host);
-   cleanup=()=>{observer.disconnect();reading.scrollTrigger?.kill();reading.revert();sceneTrigger.kill();scene?.dispose();mm.revert();hero.removeEventListener('pointermove',pointer);hero.removeEventListener('pointerleave',leave)};
+   cleanup=()=>{observer.disconnect();reading.scrollTrigger?.kill();reading.revert();sceneTrigger.kill();cameraMotion.kill();scene?.dispose();mm.revert();hero.removeEventListener('pointermove',pointer);hero.removeEventListener('pointerleave',leave)};
    await document.fonts.ready;if(!cancelled)ScrollTrigger.refresh();
   }
   const timer=setTimeout(()=>{start().catch(()=>{cleanup();document.documentElement.dataset.motion='off'})},180);

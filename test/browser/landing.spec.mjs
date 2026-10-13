@@ -114,3 +114,22 @@ test('motion control does not cover hero actions on desktop or mobile',async({pa
  }
  }
 });
+
+test('cinematic scroll holds the scene, changes chapters and releases to ordinary content',async({page})=>{
+ await page.setViewportSize({width:1440,height:900});await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('/welcome/');
+ await expect(page.locator('html')).toHaveAttribute('data-motion','on');
+ await expect(page.locator('.hero')).toHaveCSS('position','sticky');
+ await expect(page.locator('.scene-meter b')).toHaveText('01 / 03');
+ await page.evaluate(()=>scrollTo({top:900,behavior:'instant'}));
+ await expect(page.locator('.scene-meter b')).toHaveText('02 / 03');
+ await expect(page.locator('[data-scene-caption="1"]')).toHaveCSS('opacity','1');
+ await expect(page.locator('.scene-enter')).toBeInViewport();
+ await expect(page.locator('.hero-content')).toHaveCSS('visibility','hidden');
+ await page.evaluate(()=>scrollTo({top:1750,behavior:'instant'}));
+ await expect(page.locator('.scene-meter b')).toHaveText('03 / 03');
+ await expect(page.locator('[data-scene-caption="2"]')).toHaveCSS('opacity','1');
+ await page.getByRole('link',{name:'เปิดโลกการเรียนรู้',exact:true}).click();await expect(page.locator('#intro-title')).toBeInViewport();
+ await page.getByRole('button',{name:'ลดการเคลื่อนไหว',exact:true}).click();
+ await expect(page.locator('.hero')).toHaveCSS('position','relative');
+ await expect(page.locator('.hero-content')).toHaveCSS('visibility','visible');
+});

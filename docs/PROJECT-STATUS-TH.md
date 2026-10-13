@@ -1,3 +1,5 @@
+> **13 ต.ค. 2569 — เตรียมรุ่น 1.13.0:** Landing ธีม midnight/vermilion ตามบรรยากาศ Kage พร้อมกล้องเดินผ่านหน้ากระดาษสามช่วง ปรับเฉพาะ Landing, source ห้องแชทและ backend ไม่เปลี่ยน ผ่าน local unit 131, retrieval 24, browser 56, TypeScript/build และตรวจภาพ desktop/mobile บันทึกรุ่น `docs/releases/v1.13.0.md`; การปล่อยจริงยืนยันจาก CI, GitHub release และ health ของระบบ
+
 # อัปเดต 13 ตุลาคม 2569 — Landing 1.12.0
 
 ปรับ Landing ด้วยชื่อ C COMPANION ขนาดใหญ่และฉากหนังสือสามมิติ ไม่แก้หน้าห้องแชทหรือ backend ดู [บันทึกรุ่น](releases/v1.12.0.md) ตรวจสถานะ deploy ผ่าน health เทียบกับ commit ก่อนดำเนินการครั้งต่อไป
